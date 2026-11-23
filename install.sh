@@ -1,6 +1,7 @@
 #!/bin/sh
 # Install kido for the current user, without sudo: kido goes into PREFIX (default ~/.local), then
-# `kido setup` downloads QEMU into KIDO_HOME (default ~/.kido). Nothing else on the system changes.
+# `kido setup` pulls the Darwin image into KIDO_HOME (default ~/.kido). Nothing else on the system
+# changes.
 #
 #   curl -fsSL https://kido.sh/install.sh | sh
 #   curl -fsSL https://github.com/kido-sh/kido/releases/latest/download/install.sh | sh
@@ -8,12 +9,15 @@
 #   sh install.sh --tarball dist/kido-0.1.0-darwin-arm64.tar.gz    # a local `make dist`
 #
 # Options (or environment): --prefix DIR (KIDO_PREFIX), --version V (KIDO_VERSION, default: the
-# latest release), --repo OWNER/NAME (KIDO_REPO), --tarball FILE, --image REMOTE_REF (KIDO_IMAGE: a
-# base image for `kido setup --image`), --no-setup (KIDO_NO_SETUP=1).
+# latest release), --repo OWNER/NAME (KIDO_REPO), --tarball FILE, --image REMOTE_REF (KIDO_IMAGE:
+# the base image `kido setup` pulls, default ghcr.io/kido-sh/darwin), --no-setup (KIDO_NO_SETUP=1).
 #
-# Everything runs inside main, so a download cut short executes nothing.
+# A download is installed only if its SHA256SUMS carries the kido release signature and lists its
+# SHA-256. Everything runs inside main, so a download cut short executes nothing.
 
 set -eu
+
+release_key='ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEQuRAYSAENI7qS+YLpWLf6EGKUAjjeNz1e++6ShGcuh'
 
 say() { printf '%s\n' "$*" >&2; }
 die() { say "install.sh: $*"; exit 1; }
@@ -28,6 +32,14 @@ USAGE
 }
 
 sha256_of() { shasum -a 256 "$1" | awk '{print $1}'; }
+
+sum_for() { awk -v n="$2" '$2 == n || $2 == "*" n { print $1; exit }' "$1"; }
+
+verify_sums() {
+	printf 'kido namespaces="release@kido.sh" %s\n' "$release_key" >"$tmp/allowed_signers"
+	ssh-keygen -Y verify -f "$tmp/allowed_signers" -I kido -n release@kido.sh -s "$1.sig" <"$1" >/dev/null 2>&1 ||
+		die "$1 does not carry a valid kido release signature"
+}
 
 download() {
 	curl -fsSL --proto '=https' --tlsv1.2 --retry 2 -o "$2" "$1" || die "download failed: $1"
@@ -77,12 +89,17 @@ main() {
 
 	if [ -n "$tarball" ]; then
 		[ -f "$tarball" ] || die "no such file: $tarball"
-		if [ -f "$tarball.sha256" ]; then
-			want=$(awk '{print $1; exit}' "$tarball.sha256")
-			[ "$(sha256_of "$tarball")" = "$want" ] || die "$tarball does not match $tarball.sha256"
-			say "Verified $tarball against its .sha256"
+		sums=$(dirname "$tarball")/SHA256SUMS
+		if [ -f "$sums" ]; then
+			if [ -f "$sums.sig" ]; then
+				verify_sums "$sums"
+			fi
+			want=$(sum_for "$sums" "$(basename "$tarball")")
+			[ -n "$want" ] || die "$sums does not list $(basename "$tarball")"
+			[ "$(sha256_of "$tarball")" = "$want" ] || die "$tarball does not match $sums"
+			say "Verified $tarball against $sums"
 		else
-			say "note: no $tarball.sha256 next to it; installing without a checksum"
+			say "note: no SHA256SUMS next to $tarball; installing without a checksum"
 		fi
 		archive=$tarball
 	else
@@ -91,10 +108,13 @@ main() {
 		base=https://github.com/$repo/releases/download/v$version
 		say "Downloading kido $version from $base"
 		download "$base/$name" "$tmp/$name"
-		download "$base/$name.sha256" "$tmp/$name.sha256"
-		want=$(awk '{print $1; exit}' "$tmp/$name.sha256")
+		download "$base/SHA256SUMS" "$tmp/SHA256SUMS"
+		download "$base/SHA256SUMS.sig" "$tmp/SHA256SUMS.sig"
+		verify_sums "$tmp/SHA256SUMS"
+		want=$(sum_for "$tmp/SHA256SUMS" "$name")
+		[ -n "$want" ] || die "SHA256SUMS does not list $name"
 		[ "$(sha256_of "$tmp/$name")" = "$want" ] || die "$name does not match its published SHA-256"
-		say "Verified SHA-256 $want"
+		say "Verified the release signature and SHA-256 $want"
 		archive=$tmp/$name
 	fi
 
@@ -122,7 +142,7 @@ main() {
 	esac
 
 	if [ "$run_setup" = 0 ]; then
-		say "Next: $prefix/bin/kido setup   (downloads QEMU into KIDO_HOME, ~/.kido by default)"
+		say "Next: $prefix/bin/kido setup   (pulls the Darwin image into KIDO_HOME, ~/.kido by default)"
 		return 0
 	fi
 	set -- setup
