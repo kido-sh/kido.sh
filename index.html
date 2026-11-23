@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>kido: macOS command-line tools in tiny Darwin containers</title>
-<meta name="description" content="kido runs macOS command-line tools in micro-VMs on Apple Silicon, with the commands you know from Docker. Each container boots its own Darwin guest in about half a second.">
+<meta name="description" content="kido runs macOS command-line tools in micro-VMs on Apple Silicon. Each container boots its own Darwin guest in under a second.">
 <meta property="og:title" content="kido">
 <meta property="og:description" content="macOS command-line tools in tiny Darwin containers on Apple Silicon.">
 <meta property="og:url" content="https://kido.sh/">
@@ -95,7 +95,7 @@ footer p { margin: 6px 0; }
   <main>
     <div class="hero">
       <h1>macOS command-line tools in tiny Darwin containers.</h1>
-      <p class="lede">kido runs tools built for macOS on Apple Silicon in their own micro-VMs, with the commands you know from Docker. Each container boots an open-source Darwin guest in about half a second. No Docker, no root, no Linux VM in between.</p>
+      <p class="lede">kido runs tools built for macOS on Apple Silicon in their own micro-VMs. Each container boots an open-source Darwin guest in under a second. No root, and no Linux VM in between.</p>
       <div class="install">
         <code id="cmd">curl -fsSL https://kido.sh/install.sh | sh</code>
         <button type="button" id="copy">Copy</button>
@@ -112,11 +112,11 @@ footer p { margin: 6px 0; }
     <section>
       <h2>What you get</h2>
       <div class="grid">
-        <div class="card"><h3>Fast</h3><p>A one-shot <code>kido run --rm</code> takes about half a second; copying 64 MB in or out about a second.</p></div>
-        <div class="card"><h3>Familiar</h3><p><code>run</code>, <code>exec</code>, <code>cp</code>, <code>logs</code>, <code>commit</code>, <code>build</code> from a Dockerfile, <code>push</code> and <code>pull</code> through any OCI registry.</p></div>
+        <div class="card"><h3>Fast</h3><p>A one-shot <code>kido run --rm</code> takes under a second. <code>kido cp</code> moves 64 MB in about a second or less.</p></div>
+        <div class="card"><h3>Everyday commands</h3><p><code>run</code>, <code>exec</code>, <code>cp</code>, <code>logs</code>, <code>commit</code>, <code>build</code> from a Dockerfile, <code>push</code> and <code>pull</code> through any OCI registry.</p></div>
         <div class="card"><h3>Isolated</h3><p>Every container is its own virtual machine. The host talks to its guest agent over a mutually authenticated, encrypted channel.</p></div>
         <div class="card"><h3>Networks</h3><p>User networks that cannot reach each other, <code>--network none</code>, and published ports on 127.0.0.1 by default.</p></div>
-        <div class="card"><h3>Two backends</h3><p>QEMU with Hypervisor.framework, or Apple's Virtualization.framework.</p></div>
+        <div class="card"><h3>Two backends</h3><p>Apple's Virtualization.framework by default, or QEMU with Hypervisor.framework.</p></div>
         <div class="card"><h3>Unmodified binaries</h3><p>Tools built for macOS arm64 run as they are: no rebuild, no shims.</p></div>
       </div>
     </section>
