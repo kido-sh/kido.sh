@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>kido: macOS command-line tools in tiny Darwin containers</title>
+<meta name="description" content="kido runs macOS command-line tools in micro-VMs on Apple Silicon, with the commands you know from Docker. Each container boots its own Darwin guest in about half a second.">
+<meta property="og:title" content="kido">
+<meta property="og:description" content="macOS command-line tools in tiny Darwin containers on Apple Silicon.">
+<meta property="og:url" content="https://kido.sh/">
+<meta property="og:type" content="website">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23d9480f'/%3E%3Cpath d='M20 14v36M20 34l18-18M27 28l14 22' stroke='white' stroke-width='7' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #fbfaf8;
+  --fg: #1c1b19;
+  --muted: #5f5b55;
+  --line: #e6e2dc;
+  --card: #ffffff;
+  --code-bg: #f2efea;
+  --accent: #d9480f;
+  --accent-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141312;
+    --fg: #ece9e4;
+    --muted: #a39e96;
+    --line: #2c2a27;
+    --card: #1b1a18;
+    --code-bg: #201e1c;
+    --accent: #ff7a3d;
+    --accent-fg: #141312;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, pre { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 14px; }
+.wrap { max-width: 920px; margin: 0 auto; padding: 0 16px; }
+header { padding: 20px 0; display: flex; align-items: center; justify-content: space-between; }
+.brand { font-weight: 700; font-size: 20px; letter-spacing: -0.02em; color: var(--fg); }
+.brand span { color: var(--accent); }
+nav a { margin-left: 20px; color: var(--muted); font-size: 15px; }
+.hero { padding: 56px 0 40px; }
+h1 { font-size: clamp(32px, 6vw, 52px); line-height: 1.1; letter-spacing: -0.03em; margin: 0 0 18px; }
+.lede { font-size: clamp(17px, 2.4vw, 20px); color: var(--muted); max-width: 680px; margin: 0 0 32px; }
+.install {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px 16px; max-width: 640px;
+}
+.install code { flex: 1 1 auto; overflow-x: auto; white-space: nowrap; }
+.install code::before { content: "$ "; color: var(--muted); }
+button {
+  border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer;
+  background: var(--accent); color: var(--accent-fg); font: 600 14px/1 inherit;
+}
+.alt { color: var(--muted); font-size: 14px; margin: 12px 0 0; }
+.term {
+  margin: 40px 0 0; background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 18px 20px; overflow-x: auto; line-height: 1.7;
+}
+.term .p { color: var(--muted); user-select: none; }
+.term .o { color: var(--muted); }
+section { padding: 40px 0; border-top: 1px solid var(--line); }
+h2 { font-size: 24px; letter-spacing: -0.02em; margin: 0 0 20px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+.card h3 { margin: 0 0 6px; font-size: 17px; }
+.card p { margin: 0; color: var(--muted); font-size: 15px; }
+.status { color: var(--muted); }
+footer { padding: 32px 0 48px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+footer p { margin: 6px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="/">ki<span>do</span></a>
+    <nav>
+      <a href="https://github.com/kido-sh/kido#readme">Docs</a>
+      <a href="https://github.com/kido-sh/kido">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>macOS command-line tools in tiny Darwin containers.</h1>
+      <p class="lede">kido runs tools built for macOS on Apple Silicon in their own micro-VMs, with the commands you know from Docker. Each container boots an open-source Darwin guest in about half a second. No Docker, no root, no Linux VM in between.</p>
+      <div class="install">
+        <code id="cmd">curl -fsSL https://kido.sh/install.sh | sh</code>
+        <button type="button" id="copy">Copy</button>
+      </div>
+      <p class="alt">Or <code>brew install kido-sh/tap/kido</code>, or build from <a href="https://github.com/kido-sh/kido">source</a>.</p>
+      <pre class="term"><span class="p">$ </span>kido run --rm darwin uname -sm
+<span class="o">Darwin arm64</span>
+<span class="p">$ </span>kido build -t adb:37 adb-image/
+<span class="o">Successfully tagged adb:37</span>
+<span class="p">$ </span>kido run --rm adb:37
+<span class="o">Android Debug Bridge version 1.0.41</span></pre>
+    </div>
+
+    <section>
+      <h2>What you get</h2>
+      <div class="grid">
+        <div class="card"><h3>Fast</h3><p>A one-shot <code>kido run --rm</code> takes about half a second; copying 64 MB in or out about a second.</p></div>
+        <div class="card"><h3>Familiar</h3><p><code>run</code>, <code>exec</code>, <code>cp</code>, <code>logs</code>, <code>commit</code>, <code>build</code> from a Dockerfile, <code>push</code> and <code>pull</code> through any OCI registry.</p></div>
+        <div class="card"><h3>Isolated</h3><p>Every container is its own virtual machine. The host talks to its guest agent over a mutually authenticated, encrypted channel.</p></div>
+        <div class="card"><h3>Networks</h3><p>User networks that cannot reach each other, <code>--network none</code>, and published ports on 127.0.0.1 by default.</p></div>
+        <div class="card"><h3>Two backends</h3><p>QEMU with Hypervisor.framework, or Apple's Virtualization.framework.</p></div>
+        <div class="card"><h3>Unmodified binaries</h3><p>Tools built for macOS arm64 run as they are: no rebuild, no shims.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Status</h2>
+      <p class="status">kido is experimental. Commands, the image format and the protocol between kido and its guest agent may still change. The first release and a downloadable base image are on their way; until then, build kido from source. Read the <a href="https://github.com/kido-sh/kido#readme">README</a> for setup, the security model and current limits.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>kido is open source under the Apache License 2.0. Its guest builds on PureDarwin, xnu-loader and Apple's open-source Darwin releases: see the <a href="https://github.com/kido-sh/kido#acknowledgements">acknowledgements</a>.</p>
+    <p>kido is an independent project, not affiliated with Apple.</p>
+  </footer>
+</div>
+<script>
+document.getElementById("copy").addEventListener("click", function () {
+  var b = this, text = document.getElementById("cmd").textContent;
+  var done = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy"; }, 1500); };
+  if (navigator.clipboard) { navigator.clipboard.writeText(text).then(done); return; }
+  var t = document.createElement("textarea");
+  t.value = text; document.body.appendChild(t); t.select();
+  try { document.execCommand("copy"); done(); } finally { document.body.removeChild(t); }
+});
+</script>
+</body>
+</html>
