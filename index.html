@@ -3,144 +3,402 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>kido: macOS command-line tools in tiny Darwin containers</title>
-<meta name="description" content="kido runs macOS command-line tools in micro-VMs on Apple Silicon. Each container boots its own Darwin guest in under a second.">
+<title>kido: Fast, lightweight macOS micro-VMs</title>
+<meta name="description" content="Isolated, disposable Darwin guests on Apple Silicon and ARM64 Linux. Run unmodified macOS arm64 binaries with sub-second boot.">
 <meta property="og:title" content="kido">
-<meta property="og:description" content="macOS command-line tools in tiny Darwin containers on Apple Silicon.">
+<meta property="og:description" content="Isolated, disposable Darwin guests on Apple Silicon and ARM64 Linux. Unmodified macOS arm64 binaries, sub-second boot.">
 <meta property="og:url" content="https://kido.sh/">
 <meta property="og:type" content="website">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23d9480f'/%3E%3Cpath d='M20 14v36M20 34l18-18M27 28l14 22' stroke='white' stroke-width='7' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
 <style>
-:root {
-  --bg: #fbfaf8;
-  --fg: #1c1b19;
-  --muted: #5f5b55;
-  --line: #e6e2dc;
-  --card: #ffffff;
-  --code-bg: #f2efea;
-  --accent: #d9480f;
-  --accent-fg: #ffffff;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #141312;
-    --fg: #ece9e4;
-    --muted: #a39e96;
-    --line: #2c2a27;
-    --card: #1b1a18;
-    --code-bg: #201e1c;
-    --accent: #ff7a3d;
-    --accent-fg: #141312;
-  }
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
-code, pre { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 14px; }
-.wrap { max-width: 920px; margin: 0 auto; padding: 0 16px; }
-header { padding: 20px 0; display: flex; align-items: center; justify-content: space-between; }
-.brand { font-weight: 700; font-size: 20px; letter-spacing: -0.02em; color: var(--fg); }
-.brand span { color: var(--accent); }
-nav a { margin-left: 20px; color: var(--muted); font-size: 15px; }
-.hero { padding: 56px 0 40px; }
-h1 { font-size: clamp(32px, 6vw, 52px); line-height: 1.1; letter-spacing: -0.03em; margin: 0 0 18px; }
-.lede { font-size: clamp(17px, 2.4vw, 20px); color: var(--muted); max-width: 680px; margin: 0 0 32px; }
-.install {
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-  background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px;
-  padding: 14px 16px; max-width: 640px;
-}
-.install code { flex: 1 1 auto; overflow-x: auto; white-space: nowrap; }
-.install code::before { content: "$ "; color: var(--muted); }
-button {
-  border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer;
-  background: var(--accent); color: var(--accent-fg); font: 600 14px/1 inherit;
-}
-.alt { color: var(--muted); font-size: 14px; margin: 12px 0 0; }
-.term {
-  margin: 40px 0 0; background: var(--card); border: 1px solid var(--line); border-radius: 12px;
-  padding: 18px 20px; overflow-x: auto; line-height: 1.7;
-}
-.term .p { color: var(--muted); user-select: none; }
-.term .o { color: var(--muted); }
-section { padding: 40px 0; border-top: 1px solid var(--line); }
-h2 { font-size: 24px; letter-spacing: -0.02em; margin: 0 0 20px; }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
-.card h3 { margin: 0 0 6px; font-size: 17px; }
-.card p { margin: 0; color: var(--muted); font-size: 15px; }
-.status { color: var(--muted); }
-footer { padding: 32px 0 48px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
-footer p { margin: 6px 0; }
+:root{--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--bg:#f8f6f2;--fg:#181715;--m:#5c5750;--l:#e5e0d8;--ls:#d3cbc0;--c:#fff;--cs:#faf8f4;--cb:#f1ede6;--a:#d9480f;--bb:#c43c0a;--bh:#a83207;--af:#fff;--as:#fff1ea;--ab:#f5c6b0;--at:#b63607;--ok-t:#17663a;--ok-s:#eef8f1;--ok-b:#b6dfc5;--s1:#fff4ec;--s2:#fcf9f5;--sg:rgba(217,72,15,.11);--sd:rgba(182,54,7,.14);--b1:#f4976c;--tb:#191715;--tbar:#22201d;--tl:#302d29;--tf:#f4f1ec;--tm:#b6aea3;--tp:#ff864c;--sc:0 1px 2px rgba(24,23,21,.04),0 6px 20px rgba(24,23,21,.03);--sch:0 2px 6px rgba(24,23,21,.06),0 12px 28px rgba(24,23,21,.05);--su:0 2px 6px rgba(24,23,21,.06),0 10px 24px rgba(24,23,21,.05);--suh:0 4px 12px rgba(24,23,21,.08),0 16px 32px rgba(24,23,21,.07);--st:0 14px 36px rgba(24,23,21,.14),0 2px 8px rgba(24,23,21,.08);--hg:radial-gradient(62% 54% at 50% 0%,rgba(217,72,15,.08),transparent 72%);--lh:rgba(217,72,15,.13)}@media(prefers-color-scheme:dark){:root{--bg:#121110;--fg:#f0ece6;--m:#aaa39a;--l:#2c2925;--ls:#3e3a34;--c:#1a1917;--cs:#211f1c;--cb:#201e1b;--a:#ff7a3d;--bb:#ff7a3d;--bh:#ff905c;--af:#141312;--as:#2e1c14;--ab:#5c3421;--at:#ff9666;--ok-t:#6ee09c;--ok-s:#15291e;--ok-b:#244d35;--s1:#251914;--s2:#1d1b18;--sg:rgba(255,122,61,.14);--sd:rgba(255,150,102,.14);--b1:#b55427;--tb:#0e0d0c;--tbar:#161513;--tl:#282522;--tf:#f3efe9;--tm:#a69f95;--tp:#ff864c;--sc:0 1px 0 rgba(255,255,255,.03) inset,0 8px 24px rgba(0,0,0,.28);--sch:0 1px 0 rgba(255,255,255,.05) inset,0 12px 32px rgba(0,0,0,.36);--su:0 2px 8px rgba(0,0,0,.35),0 10px 24px rgba(0,0,0,.28);--suh:0 6px 14px rgba(0,0,0,.42),0 16px 32px rgba(0,0,0,.34);--st:0 16px 40px rgba(0,0,0,.45),0 1px 0 rgba(255,255,255,.04) inset;--hg:radial-gradient(62% 54% at 50% 0%,rgba(255,122,61,.11),transparent 72%);--lh:rgba(255,122,61,.18)}}*,*::before,*::after{box-sizing:border-box}html{background:var(--bg);overflow-x:clip}body{margin:0;background:var(--hg),var(--bg);background-repeat:no-repeat;background-size:100% 560px,auto;color:var(--fg);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}a{color:var(--at);text-decoration:none}a:hover{text-decoration:underline}a:focus-visible,button:focus-visible{outline:2px solid var(--a);outline-offset:2px}code,pre{font-family:var(--mono);font-size:13.5px}.wrap{max-width:1120px;margin:0 auto;padding:0 24px}header{padding:22px 0;display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:20px;letter-spacing:-.025em;color:var(--fg)}.brand:hover{text-decoration:none}.brand-word{color:var(--fg)}.brand-word em{font-style:normal;color:var(--at)}.brand-mark{width:28px;height:28px;border-radius:7px;display:block;flex-shrink:0}nav{display:flex;align-items:center;gap:22px}nav a{color:var(--m);font-size:15px;font-weight:500;transition:color .15s}nav a:hover{color:var(--fg);text-decoration:none}.hero{padding:40px 0 68px;display:grid;grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);gap:38px;align-items:center}h1{font-size:clamp(32px,4.4vw,50px);line-height:1.08;letter-spacing:-.035em;font-weight:700;margin:0 0 18px}.lede{font-size:clamp(16.5px,1.8vw,18.5px);line-height:1.6;color:var(--m);max-width:540px;margin:0 0 28px}.install{display:flex;align-items:center;gap:10px;background:var(--c);border:1px solid var(--ls);border-radius:13px;padding:8px 8px 8px 16px;max-width:530px;box-shadow:var(--sc)}.install code{flex:1 1 auto;min-width:0;overflow-x:auto;white-space:nowrap;padding:4px 0;color:var(--fg)}.install code::before{content:"$ ";color:var(--at);font-weight:600;user-select:none}.install button{border:0;border-radius:9px;padding:9px 16px;cursor:pointer;background:var(--bb);color:var(--af);font-family:inherit;font-size:14px;font-weight:600;line-height:1;flex-shrink:0;transition:background-color .15s,transform .12s}.install button:hover{background:var(--bh)}.install button:active{transform:translateY(1px)}.alt{color:var(--m);font-size:14px;line-height:1.65;margin:14px 0 0;max-width:530px}.alt code{background:var(--cb);border:1px solid var(--l);border-radius:6px;padding:1.5px 6px;font-size:12.5px;color:var(--fg);white-space:nowrap}.icopy{position:relative;display:inline-flex;align-items:center;gap:5px;vertical-align:baseline;margin:2px 0;padding:3px 7px;min-height:28px;border-radius:6px;background:var(--cb);border:1px solid var(--l);color:var(--fg);font-family:var(--mono);font-size:12.5px;line-height:1.3;white-space:nowrap;cursor:pointer;transition:border-color .15s,background-color .15s,color .15s}.icopy:hover{border-color:var(--ab);background:var(--as)}.icopy:active{transform:translateY(.5px)}.ic-ico{position:relative;width:11px;height:11px;flex-shrink:0;display:inline-grid;place-items:center;color:var(--m);transition:color .15s}.ic-ico svg{grid-area:1/1;transition:opacity .15s}.ic-k{opacity:0}.icopy:hover .ic-ico,.icopy.is-copied .ic-ico{color:var(--at)}.icopy.is-copied{border-color:var(--a);background:var(--as)}.icopy.is-copied .ic-c{opacity:0}.icopy.is-copied .ic-k{opacity:1}.icopy::after{content:"Copied";position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%) translateY(2px);padding:3px 8px;border-radius:6px;background:var(--fg);color:var(--c);font-family:var(--sans);font-size:11px;font-weight:600;line-height:1.25;white-space:nowrap;pointer-events:none;opacity:0;box-shadow:0 4px 12px rgba(24,23,21,.16);transition:opacity .15s,transform .15s;z-index:10}.icopy.is-copied::after{opacity:1;transform:translateX(-50%) translateY(0)}.term-shell{background:var(--tb);border:1px solid var(--tl);border-radius:16px;overflow:hidden;box-shadow:var(--st);min-width:0}.term-bar{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:var(--tbar);border-bottom:1px solid var(--tl)}.term-dots{display:flex;gap:7px}.term-dots span{width:10px;height:10px;border-radius:50%;background:#3f3b36}.term-dots span:first-child{background:#d9480f;opacity:.9}.term-title{font-family:var(--mono);font-size:12px;color:var(--tm)}.term{margin:0;padding:18px 18px 20px;overflow-x:auto;font-size:12.5px;line-height:1.68;color:var(--tf);background:transparent}.term .p{color:var(--tp);user-select:none;font-weight:600}.term .o{color:var(--tm)}.term .ok{color:#f5c2a8}.term-cursor{display:inline-block;width:7.5px;height:14px;vertical-align:-2px;border-radius:1.5px;background:var(--tp);animation:blink .9s steps(1) 3}.section-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px 24px;margin-bottom:24px}.features-section{padding:56px 0 36px;border-top:1px solid var(--l)}h2{font-size:clamp(24px,3vw,30px);letter-spacing:-.025em;line-height:1.15;margin:0}.section-sub{margin:0;color:var(--m);font-size:15.5px}.bento{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:18px}.fcard{position:relative;background:var(--c);border:1px solid var(--l);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--sc);min-width:0;transition:border-color .2s,box-shadow .2s}.fcard:hover{border-color:var(--ls);box-shadow:var(--sch)}.fcard-copy{position:relative;z-index:3;padding:0 28px 26px}.fcard-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px}.fcard h3{margin:0 0 7px;font-size:20px;line-height:1.2;letter-spacing:-.02em;font-weight:650;color:var(--fg);display:flex;align-items:center;flex-wrap:wrap;gap:8px;min-width:0}.fcard-head h3{margin:0}.replay-btn{display:inline-flex;align-items:center;gap:4.5px;padding:4px 9px;border-radius:999px;background:var(--cs);border:1px solid var(--l);color:var(--m);font-family:inherit;font-size:11.5px;font-weight:550;line-height:1.2;flex-shrink:0;cursor:pointer;transition:color .15s,border-color .15s,background-color .15s,transform .12s}.replay-btn:hover{color:var(--fg);border-color:var(--ls);background:var(--cb)}.replay-btn:active{transform:translateY(1px)}.replay-btn svg{flex-shrink:0}.fcard p{margin:0;color:var(--m);font-size:14.5px;line-height:1.55}.fcard p code{font-size:12.5px;background:var(--cb);border:1px solid var(--l);border-radius:5px;padding:1px 5px;color:var(--fg);white-space:nowrap}.pill{display:inline-flex;align-items:center;gap:5px;padding:2.5px 9px;border-radius:999px;font-size:12px;font-weight:600;line-height:1.4}.pill-accent{background:var(--as);border:1px solid var(--ab);color:var(--at)}.pill-neutral{background:var(--cb);border:1px solid var(--ls);color:var(--fg)}.ui-icon{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex-shrink:0}.ui-icon-accent{background:var(--as);border:1px solid var(--ab);color:var(--at)}.ui-icon-neutral{background:var(--cs);border:1px solid var(--l);color:var(--fg)}.ui-panel-meta{min-width:0;flex:1}.fcard-native{grid-column:1/7;grid-row:1/3;min-height:566px}.art-native{position:relative;flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;padding:26px 26px 18px;overflow:hidden;pointer-events:none;background:radial-gradient(75% 65% at 88% 6%,var(--sg),transparent 72%),linear-gradient(180deg,var(--s1) 0%,var(--s2) 64%,var(--c) 100%)}.art-native::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle,var(--sd) 1px,transparent 1px);background-size:18px 18px;-webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,.9) 0%,rgba(0,0,0,.45) 68%,transparent 100%);mask-image:linear-gradient(180deg,rgba(0,0,0,.9) 0%,rgba(0,0,0,.45) 68%,transparent 100%)}.native-stage{position:relative;z-index:1;width:100%;display:flex;flex-direction:column;gap:15px}.native-flow{display:flex;align-items:stretch;gap:0}.nf-node{flex:1 1 0;min-width:0;background:var(--c);border:1px solid var(--ls);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:9px;box-shadow:var(--su);transition:transform .25s,border-color .25s}.nf-node-target{border-color:var(--ab)}.fcard-native:hover .nf-node-target{border-color:var(--a)}.nf-title{display:block;font-family:var(--mono);font-size:12px;font-weight:650;color:var(--fg);line-height:1.25;white-space:nowrap}.nf-sub{display:block;font-size:11px;color:var(--m);line-height:1.3;white-space:nowrap}.nf-link{position:relative;flex:0 0 96px;display:flex;align-items:center;justify-content:center}.nf-track-svg{position:absolute;left:0;right:0;width:100%;height:14px;overflow:visible}.nf-track-v{display:none}.nf-dash{stroke-dasharray:4 3}.fcard-native.is-playing .nf-dash{animation:dash-flow 150ms linear 650ms 1 both}.nf-badge{position:relative;z-index:1;display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;background:var(--as);border:1px solid var(--ab);color:var(--at);font-size:11px;font-weight:650;line-height:1.2;white-space:nowrap}.run-card{background:var(--c);border:1px solid var(--ls);border-radius:14px;overflow:hidden;box-shadow:var(--su);transition:transform .25s,box-shadow .25s,border-color .25s}.fcard-native:hover .run-card{transform:translateY(-2px);box-shadow:var(--suh);border-color:var(--ab)}.run-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;background:var(--tb);border-bottom:1px solid var(--tl)}.run-cmd{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;color:var(--tf);white-space:nowrap;overflow:hidden;min-width:0}.run-cmd .p{color:var(--tp);font-weight:600;flex-shrink:0}.run-cmd-type{display:inline-block}.fcard-native.is-playing .run-cmd-type{animation:c1-type 590ms steps(28,end) 1 both}.run-time{font-family:var(--mono);font-size:11.5px;font-weight:700;padding:2.5px 8px;border-radius:999px;background:var(--bb);color:var(--af);white-space:nowrap;flex-shrink:0}.fcard-native.is-playing .run-time{animation:c1-badge 40ms ease-out 760ms 1 both}.run-body{padding:14px 15px 13px;display:flex;flex-direction:column;gap:11px}.run-stages{display:grid;grid-template-columns:32fr 48fr 20fr;gap:6px;font-size:11.5px;font-weight:600;color:var(--m)}.fcard-native.is-playing .run-stage-1{animation:c1-lit 50ms ease-out 650ms 1 both}.run-stage-2{color:var(--fg)}.fcard-native.is-playing .run-stage-2{animation:c1-lit 50ms ease-out 700ms 1 both}.run-stage-3{display:inline-flex;align-items:center;justify-content:flex-end;gap:4px;color:var(--at)}.fcard-native.is-playing .run-stage-3{animation:c1-lit 30ms ease-out 750ms 1 both}.run-track{position:relative;height:9px;border-radius:999px;background:var(--cb);padding:1.5px;display:flex;gap:3px;overflow:hidden}.run-seg{height:100%;border-radius:999px;background:var(--l);overflow:hidden}.run-seg-1{flex:32}.run-seg-2{flex:48}.run-seg-3{flex:20}.run-fill{display:block;width:100%;height:100%;border-radius:999px;transform-origin:left center}.run-fill-1{background:var(--b1)}.run-fill-2{background:var(--a)}.run-fill-3{background:var(--bb)}.fcard-native.is-playing .run-fill-1{animation:c1-fill 50ms linear 650ms 1 both}.fcard-native.is-playing .run-fill-2{animation:c1-fill 50ms linear 700ms 1 both}.fcard-native.is-playing .run-fill-3{animation:c1-fill 30ms linear 750ms 1 both}.run-out{background:var(--cs);border:1px solid var(--l);border-radius:10px;padding:9px 12px;font-family:var(--mono);font-size:11.5px;line-height:1.55;display:flex;flex-direction:column;gap:1px}.run-out-line{display:grid;grid-template-columns:118px minmax(0,1fr);gap:8px}.fcard-native.is-playing .run-out-line{animation:c1-out 40ms ease-out 760ms 1 both}.run-out-k{color:var(--m);white-space:nowrap}.run-out-v{color:var(--fg);font-weight:600;white-space:nowrap}.run-out-v-accent{color:var(--at)}.run-meta{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 12px;font-size:11.5px;color:var(--m)}.run-meta-item{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}.run-meta-item svg{color:var(--at);flex-shrink:0}.fcard-native .fcard-copy{padding-top:10px}.fcard-folders{grid-column:7/13;grid-row:1;min-height:274px;gap:14px}.art-folders{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px 22px 0;z-index:2}.folder-flow{width:100%;display:flex;align-items:center;justify-content:center;gap:0;pointer-events:none}.lf-panel{background:var(--c);border:1px solid var(--ls);border-radius:12px;padding:8px 9px;box-shadow:var(--su);display:flex;flex-direction:column;gap:6px;flex:1 1 0;min-width:0;transition:border-color .2s}.panel-host,.panel-vm{border-color:var(--ab)}[data-mode=copy] .panel-host,[data-mode=copy] .panel-vm{border-color:var(--ls)}[data-mode=live].is-playing .panel-host{animation:c2-host 3s 1 both}[data-mode=live].is-playing .panel-vm{animation:c2-vm 3s 1 both}[data-mode=copy].is-playing .panel-host{animation:c2c-host 3.2s 1 both}[data-mode=copy].is-playing .panel-vm{animation:c2c-vm 3.2s 1 both}.lf-head{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}.lf-id{display:inline-flex;align-items:center;gap:5px;min-width:0}.lf-ico{color:var(--at);flex-shrink:0;display:grid;place-items:center}.panel-vm .lf-ico{color:var(--fg)}.ui-path{display:block;font-family:var(--mono);font-size:11.5px;font-weight:650;color:var(--fg);line-height:1.2;white-space:nowrap}.ui-tag{font-size:10px;font-weight:600;padding:1.5px 6px;border-radius:5px;background:var(--cb);border:1px solid var(--l);color:var(--m);white-space:nowrap;flex-shrink:0}.lf-file{background:var(--cs);border:1px solid var(--l);border-radius:8px;padding:5px 7px;display:flex;flex-direction:column;gap:3px}.lf-fname{display:flex;align-items:center;justify-content:space-between;gap:6px;font-family:var(--mono);font-size:10px;color:var(--m);padding-bottom:3px;border-bottom:1px solid var(--l)}.lf-status{display:inline-grid;align-items:center;justify-items:end;white-space:nowrap}.lf-status>span{grid-area:1/1}.lf-st-live{color:var(--at);font-weight:600}.lf-st-wait,.lf-st-local,.lf-st-done{opacity:0}.lf-st-wait{color:var(--m);font-weight:500}.lf-st-local,.lf-st-done{color:var(--at);font-weight:600}[data-mode=copy] .lf-st-live{opacity:0}[data-mode=copy] .lf-st-done{opacity:1}[data-mode=live].is-playing .lf-st-live{animation:c2-sync 3s 1 both}[data-mode=copy].is-playing .lf-st-wait{animation:c2c-st-wait 3.2s 1 both}[data-mode=copy].is-playing .lf-st-local{animation:c2c-st-local 3.2s 1 both}[data-mode=copy].is-playing .lf-st-done{animation:c2c-st-done 3.2s 1 both}.lf-lines{position:relative;display:flex;flex-direction:column;gap:1px;font-family:var(--mono);font-size:10.5px;line-height:1.45;min-height:31px}.lf-empty{position:absolute;inset:0;display:flex;align-items:center;color:var(--m);font-style:italic;opacity:0}[data-mode=live].is-playing .lf-empty-h{animation:lf-emp .12s 1.35s 1 both}[data-mode=live].is-playing .lf-empty-v{animation:lf-emp .12s ease .69s 1 both}[data-mode=copy].is-playing .lf-empty-v{animation:lf-emp .12s ease .67s 1 both}.lf-line{display:flex;align-items:baseline;gap:5px;color:var(--fg);white-space:nowrap;border-radius:4px;padding:0 3px;margin:0 -3px}.lf-ln{color:var(--m);font-size:9.5px;user-select:none}[data-mode=live].is-playing .lf-vm-1{animation:lf-in .45s ease .72s 1 both}[data-mode=live].is-playing .lf-host-1{animation:lf-in .45s 1.38s 1 both}[data-mode=live].is-playing .lf-host-2{animation:lf-in .45s 1.89s 1 both}[data-mode=live].is-playing .lf-vm-2{animation:lf-in .45s 2.55s 1 both}[data-mode=copy].is-playing .lf-host-1{animation:c2c-host-l1 3.2s 1 both}[data-mode=copy].is-playing .lf-vm-1{animation:lf-in .42s ease .7s 1 both}[data-mode=copy].is-playing .lf-vm-2{animation:lf-in .55s 1.15s 1 both}[data-mode=copy].is-playing .lf-host-2{animation:lf-in .45s 2.68s 1 both}.folder-bridge{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:44px;height:30px;position:relative;transition:opacity .2s}.folder-bridge::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:2px dashed var(--a);opacity:.65;transition:border-color .2s,opacity .2s}[data-mode=copy] .folder-bridge::before{border-color:var(--ls);opacity:.85}[data-mode=copy].is-playing .folder-bridge{animation:c2c-bridge 3.2s 1 both}.sync-packet{position:absolute;top:50%;left:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;background:var(--a);box-shadow:0 0 0 3px var(--lh);z-index:2;opacity:0}[data-mode=live].is-playing .sync-packet{animation:c2-pkt-h 3s ease-in-out 1 both}[data-mode=copy].is-playing .sync-packet{animation:c2c-pkt-h 3.2s ease-in-out 1 both}.sync-circle{position:relative;z-index:1;width:26px;height:26px;border-radius:50%;background:var(--bb);color:var(--af);display:grid;place-items:center;box-shadow:0 3px 10px rgba(196,60,10,.26);flex-shrink:0;transition:transform .2s,background-color .2s,color .2s,border-color .2s}[data-mode=copy] .sync-circle{background:var(--cs);color:var(--fg);border:1px solid var(--ls);box-shadow:var(--su)}[data-mode=live].is-playing .sync-circle{animation:c2-circle 3s 1 both}[data-mode=copy].is-playing .sync-circle{animation:c2c-circle 3.2s 1 both}.fcard-folders:hover .sync-circle{transform:scale(1.06)}.sync-icon-v{display:none}.folder-modes{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:7px}.lf-mode-or{font-size:11.5px;color:var(--m);font-weight:500;user-select:none}.lf-mode-btn{font-family:var(--mono);font-size:11px;font-weight:600;line-height:1.25;padding:3.5px 10px;border-radius:999px;background:var(--cs);border:1px solid var(--ls);color:var(--m);cursor:pointer;white-space:nowrap;transition:background-color .15s,border-color .15s,color .15s,box-shadow .15s,transform .12s}.lf-mode-btn:hover{color:var(--fg);border-color:var(--m);background:var(--cb)}.lf-mode-btn:active{transform:translateY(1px)}.lf-mode-btn.is-active{background:var(--as);border-color:var(--ab);color:var(--at);box-shadow:0 1px 3px rgba(217,72,15,.12)}.lf-mode-btn.is-active:hover{border-color:var(--a);background:var(--as);color:var(--at)}.fcard-folders.is-playing .lf-mode-btn.is-active{animation:c2-pill 3s 1 both}.fcard-vms{grid-column:7/13;grid-row:2;min-height:274px;gap:14px}.art-vms{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 20px 0;position:relative;z-index:2;pointer-events:none}.vm-scene{width:100%;display:flex;flex-direction:column;align-items:center}.vm-host-bar{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:10px;background:var(--c);border:1px solid var(--ls);box-shadow:var(--su);font-size:12px;font-weight:650;color:var(--fg);line-height:1}.vm-host-id{display:inline-flex;align-items:baseline;gap:6px;line-height:1}.vm-host-id code{font-size:11.5px;font-weight:500;color:var(--m);line-height:1}.vm-host-enc{font-size:10px;font-weight:600;padding:1.5px 7px;border-radius:999px;background:var(--as);border:1px solid var(--ab);color:var(--at)}.vm-branches{width:100%;height:24px;display:block;overflow:visible}.enc-flow{stroke-dasharray:4 3}.enc-left{stroke:var(--ls);opacity:.48}.enc-right{stroke:var(--a)}.fcard-vms.is-playing .enc-left{animation:c3-br-l 2.8s 1 both}.fcard-vms.is-playing .enc-right{animation:dash-flow 1.8s linear 1}.vm-pair{width:100%;display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);gap:8px;align-items:stretch}.vm-wall-col{position:relative;display:flex;align-items:center;justify-content:center}.vm-wall-col::before{content:"";position:absolute;top:2px;bottom:2px;left:50%;width:1.5px;transform:translateX(-50%);background:repeating-linear-gradient(to bottom,var(--ls) 0 4px,transparent 4px 8px)}.vm-wall-badge{position:relative;z-index:1;width:18px;height:18px;border-radius:50%;background:var(--c);border:1.2px solid var(--ls);color:var(--m);display:grid;place-items:center;box-shadow:0 1px 3px rgba(24,23,21,.08)}.fcard-vms.is-playing .vm-wall-badge{animation:c3-wall 2.8s 1 both}.vm-box{border-radius:13px;padding:8px 9px;border:1.3px dashed var(--ab);background:var(--cs);display:flex;flex-direction:column;gap:6px;min-width:0}.vm-box-a{border-color:var(--ab)}.vm-box-b{border-color:var(--ok-b)}.fcard-vms.is-playing .vm-box-a{animation:c3-box-a 2.8s 1 both}.fcard-vms.is-playing .vm-box-b{animation:c3-box-b 2.8s 1 both}.vm-box-head{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:10.5px;font-weight:650;color:var(--m)}.vm-box-a .vm-box-head{color:var(--at)}.vm-box-b .vm-box-head{color:var(--ok-t)}.vm-box-title{white-space:nowrap}.vm-lock-mini{width:18px;height:18px;border-radius:50%;background:var(--bb);color:var(--af);display:grid;place-items:center;flex-shrink:0}.vm-box-b .vm-lock-mini{background:var(--ok-t);color:var(--c)}.vm-ct{background:var(--c);border:1px solid var(--l);border-radius:9px;padding:7px 8px;display:flex;flex-direction:column;gap:5px;box-shadow:0 1px 2px rgba(24,23,21,.04)}.vm-ct-row{display:flex;align-items:center;justify-content:space-between;gap:5px;min-width:0}.vm-ct-name{font-family:var(--mono);font-size:11px;font-weight:650;color:var(--fg);white-space:nowrap}.vm-ct-cmd{font-family:var(--mono);font-size:10px;color:var(--m);white-space:nowrap}.vm-res-stack{display:inline-grid;align-items:center;min-height:20px}.vm-res-stack>span{grid-area:1/1;display:inline-flex;align-items:center;gap:4px;padding:2px 6.5px;border-radius:6px;font-family:var(--mono);font-size:10px;font-weight:650;line-height:1.3;white-space:nowrap;width:fit-content}.vm-r-run{background:var(--cb);border:1px solid var(--l);color:var(--m);opacity:0}.vm-r-err{background:var(--as);border:1px solid var(--ab);color:var(--at);opacity:1}.vm-r-ok{background:var(--ok-s);border:1px solid var(--ok-b);color:var(--ok-t);opacity:1}.fcard-vms.is-playing .vm-r-run{animation:c3-r-run 2.8s 1 both}.fcard-vms.is-playing .vm-r-err{animation:c3-r-err 2.8s 1 both}.fcard-vms.is-playing .vm-r-ok{animation:c3-r-ok 2.8s 1 both}.vm-box-foot{display:flex;align-items:center;justify-content:space-between;gap:4px;font-size:10px;color:var(--m)}.vm-box-foot span{white-space:nowrap}.vm-state-a{font-family:var(--mono);color:var(--at);font-weight:650}.vm-state-b{font-family:var(--mono);color:var(--ok-t);font-weight:650}.fcard-vms.is-playing .vm-state-a{animation:c3-st-a 2.8s 1 both}.fcard-commands{grid-column:1/8;grid-row:3;min-height:292px}.art-commands{flex:1 1 auto;padding:22px 24px 14px;display:flex;align-items:center;position:relative;z-index:2}.cmd-picker{width:100%;display:grid;grid-template-columns:202px minmax(0,1fr);gap:16px;align-items:center}.cmd-wheel-wrap{display:flex;align-items:center;gap:8px;min-width:0}.cmd-wheel-frame{position:relative;flex:1 1 auto;min-width:0;height:206px;border-radius:14px;background:var(--cs);border:1px solid var(--ls);box-shadow:inset 0 1px 2px rgba(24,23,21,.04);overflow:hidden}.cmd-band{position:absolute;left:6px;right:6px;top:50%;height:44px;transform:translateY(-50%);border-radius:10px;background:var(--as);border:1px solid var(--ab);pointer-events:none;z-index:0}.cmd-wheel{position:relative;z-index:1;height:100%;overflow-y:auto;padding:80px 0;scroll-snap-type:y mandatory;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;scrollbar-width:none;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 19%,#000 81%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0%,#000 19%,#000 81%,transparent 100%)}.cmd-wheel::-webkit-scrollbar{display:none}.cmd-wheel:focus-visible{outline:2px solid var(--a);outline-offset:-2px;border-radius:14px}.cmd-opt{appearance:none;border:0;background:transparent;margin:0;padding:0 12px;width:100%;height:44px;display:flex;align-items:center;justify-content:center;gap:6px;scroll-snap-align:center;cursor:pointer;font-family:var(--mono);font-size:13px;font-weight:600;color:var(--fg);opacity:.48;transform:scale(.94);transition:opacity .15s,transform .15s,color .15s}.cmd-opt::before{content:"kido";color:var(--m);font-weight:500}.cmd-opt.is-near{opacity:.58;transform:scale(.97)}.cmd-opt.is-active{opacity:1;transform:scale(1);color:var(--at);font-weight:700}.cmd-steps{display:flex;flex-direction:column;gap:8px;flex-shrink:0}.cmd-step{appearance:none;width:40px;height:44px;padding:0;border-radius:10px;background:var(--c);border:1px solid var(--ls);color:var(--fg);display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 2px rgba(24,23,21,.04);transition:border-color .15s,color .15s,background-color .15s,opacity .15s,transform .12s}.cmd-step:hover:not(:disabled){border-color:var(--ab);color:var(--at);background:var(--as)}.cmd-step:active:not(:disabled){transform:translateY(1px)}.cmd-step:disabled{opacity:.38;cursor:default}.cmd-detail{background:var(--cs);border:1px solid var(--ls);border-radius:14px;padding:12px 14px;min-height:206px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;min-width:0;box-shadow:var(--su)}.cd-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.cd-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;background:var(--as);border:1px solid var(--ab);color:var(--at);font-size:11px;font-weight:650;line-height:1.35;white-space:nowrap}.cd-count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--m);white-space:nowrap}.cd-term{background:var(--tb);border:1px solid var(--tl);border-radius:10px;padding:7px 11px;flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0}.cd-cmd{display:flex;align-items:center;gap:6px;height:18px;font-family:var(--mono);font-size:12px;line-height:18px;color:var(--tf);overflow-x:auto;white-space:nowrap;scrollbar-width:none}.cd-cmd::-webkit-scrollbar{display:none}.cd-cmd .p{color:var(--tp);font-weight:600;user-select:none;flex-shrink:0}.cd-cmd code{font-size:inherit;color:inherit;background:none;border:0;padding:0;white-space:nowrap}.cd-out{height:17px;font-family:var(--mono);font-size:11.5px;line-height:17px;color:var(--tm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cd-file{margin-top:2px;padding-top:4px;border-top:1px solid var(--tl);display:flex;flex-direction:column;gap:0;font-family:var(--mono);font-size:11px;line-height:14px;color:var(--tf);overflow-x:auto;white-space:nowrap;scrollbar-width:none}.cd-file::-webkit-scrollbar{display:none}.cd-file[hidden]{display:none}.kf-k{color:var(--tp);font-weight:650}.cd-desc{margin:0;font-size:12.5px;line-height:1.45;color:var(--fg);min-height:36px}.kf-jump{appearance:none;display:inline-flex;align-items:center;font-family:var(--mono);font-size:12.5px;line-height:1.45;color:var(--at);background:var(--as);border:1px solid var(--ab);border-radius:6px;padding:0 6px;margin:0;cursor:pointer;transition:background-color .15s,border-color .15s}.kf-jump:hover{background:var(--cb);border-color:var(--a)}.fcard-networks{grid-column:8/13;grid-row:3;min-height:292px}.art-networks{flex:1 1 auto;padding:20px 20px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;position:relative;z-index:2;pointer-events:none}.net-diagram{width:100%;max-width:396px;display:grid;grid-template-columns:minmax(0,1fr) 60px minmax(0,1fr);align-items:stretch}.net-box{border-radius:12px;padding:9px 9px 8px;background:var(--cs);border:1.2px dashed var(--ls);display:flex;flex-direction:column;justify-content:space-between;gap:8px;min-width:0;position:relative;z-index:1}.net-box-a{border-color:var(--ab)}.net-title{font-size:11px;font-weight:650;color:var(--m);line-height:14px;height:14px;white-space:nowrap}.net-box-a .net-title{color:var(--fg)}.net-nodes{display:flex;align-items:center;gap:0;width:100%;height:26px;min-width:0}.net-node{display:inline-flex;align-items:center;gap:4px;padding:4.5px 6.5px;border-radius:8px;background:var(--c);border:1px solid var(--ls);font-family:var(--mono);font-size:11px;font-weight:650;color:var(--fg);line-height:1.1;white-space:nowrap;flex-shrink:0;box-shadow:0 1px 2px rgba(24,23,21,.04);transition:border-color .2s}.net-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}.net-dot-a{background:var(--a)}.net-dot-b{background:var(--m)}.net-node-db{border-color:var(--ok-b)}.fcard-networks.is-playing .net-node-db{animation:c5-db 2.6s 1 both}.net-wire{position:relative;flex:1 1 auto;min-width:16px;height:14px;display:flex;align-items:center}.net-wire::before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;margin-top:-1px;background:var(--ls);border-radius:2px}.net-wire-a::before{background:var(--ok-b)}.net-pkt-ok{position:absolute;top:50%;left:0;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;background:var(--ok-t);box-shadow:0 0 0 3px var(--ok-s);opacity:0}.fcard-networks.is-playing .net-pkt-ok{animation:c5-pkt-ok 2.6s ease-in-out 1 both}.net-res{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:21px;padding:0 7px;border-radius:6px;font-family:var(--mono);font-size:10px;font-weight:650;line-height:1;white-space:nowrap;align-self:flex-start}.net-res-ok{background:var(--ok-s);border:1px solid var(--ok-b);color:var(--ok-t)}.fcard-networks.is-playing .net-res-ok{animation:c5-res-ok 2.6s 1 both}.net-res-quiet{background:var(--cb);border:1px solid var(--l);color:var(--m);font-weight:600}.net-wall{position:relative;padding:9px 0 8px;border-top:1.2px solid transparent;border-bottom:1.2px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:8px}.net-wall::before{content:"";position:absolute;top:4px;bottom:4px;left:50%;width:1.5px;transform:translateX(-50%);background:repeating-linear-gradient(to bottom,var(--ls) 0 3px,transparent 3px 7px)}.net-wall-sp{height:14px;flex-shrink:0}.net-x-row{position:relative;width:100%;height:26px;display:flex;align-items:center;justify-content:center}.net-probe{position:absolute;left:2px;right:50%;top:50%;height:2px;margin-top:-1px;z-index:1}.net-probe::before{content:"";position:absolute;left:0;right:14px;top:0;height:2px;background:repeating-linear-gradient(to right,var(--a) 0 4px,transparent 4px 7px);opacity:.85}.fcard-networks.is-playing .net-probe::before{animation:c5-probe 2.6s 1 both}.net-pkt-blk{position:absolute;top:50%;left:0;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;background:var(--a);box-shadow:0 0 0 3px var(--lh);opacity:0}.fcard-networks.is-playing .net-pkt-blk{animation:c5-pkt-blk 2.6s ease-in 1 both}.net-x{position:relative;z-index:2;width:26px;height:26px;border-radius:50%;background:var(--as);border:1.3px solid var(--ab);color:var(--at);display:grid;place-items:center}.fcard-networks.is-playing .net-x{animation:c5-x 2.6s 1 both}.net-blk-tag{position:relative;z-index:2;display:inline-flex;align-items:center;height:21px;padding:0 6px;border-radius:5px;background:var(--as);border:1px solid var(--ab);color:var(--at);font-family:var(--mono);font-size:9.5px;font-weight:700;line-height:1;white-space:nowrap}.fcard-networks.is-playing .net-blk-tag{animation:c5-blk-tag 2.6s 1 both}.net-defaults{width:100%;max-width:396px;padding-top:11px;border-top:1px solid var(--l);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:center}.net-pill{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:5px 8px;border-radius:9px;background:var(--c);border:1px solid var(--ls);font-size:11px;color:var(--m);white-space:nowrap;min-width:0}.net-pill-subtle{background:var(--cs)}.net-pill code{font-size:11px;font-weight:600;color:var(--fg)}.net-pill-icon{color:var(--at);flex-shrink:0}.net-pill-subtle .net-pill-icon{color:var(--m)}.try-section{padding:16px 0 56px}.try-card{background:var(--c);border:1px solid var(--l);border-radius:18px;padding:28px 30px;box-shadow:var(--sc)}.try-main{display:grid;grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);gap:28px;align-items:center}.try-head{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}.try-head h2{font-size:clamp(22px,2.4vw,26px);margin-right:4px}.try-lede{margin:0 0 18px;color:var(--m);font-size:15px;line-height:1.6;max-width:490px}.try-lede code{font-size:12.5px;background:var(--cb);border:1px solid var(--l);border-radius:5px;padding:1px 5px;color:var(--fg);white-space:nowrap}.try-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px}.gh-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border-radius:10px;background:var(--fg);color:var(--c);border:1px solid var(--fg);font-size:14px;font-weight:600;line-height:1;white-space:nowrap;transition:opacity .15s,transform .12s}.gh-cta:hover{opacity:.88;text-decoration:none}.gh-cta:active{transform:translateY(1px)}.status-link{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:10px 15px;border-radius:10px;background:var(--cs);border:1px solid var(--ls);color:var(--fg);font-size:14px;font-weight:600;line-height:1;white-space:nowrap;transition:border-color .15s,color .15s}.status-link:hover{border-color:var(--a);color:var(--at);text-decoration:none}.try-install{min-width:0}.try-install .install{max-width:none}.try-alt{margin:11px 0 0;max-width:none}.try-status{margin-top:22px;padding-top:16px;border-top:1px solid var(--l)}.try-note{margin:0;color:var(--m);font-size:14px;line-height:1.6}footer{padding:28px 0 48px;border-top:1px solid var(--l);color:var(--m);font-size:14px;line-height:1.65}footer p{margin:6px 0}@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:.2}}@keyframes dash-flow{from{stroke-dashoffset:0}to{stroke-dashoffset:-28}}@keyframes c1-type{0%{clip-path:inset(0 100% 0 0)}100%{clip-path:inset(0 0 0 0)}}@keyframes c1-fill{0%{transform:scaleX(0)}100%{transform:scaleX(1)}}@keyframes c1-lit{0%{opacity:.4}100%{opacity:1}}@keyframes c1-badge{0%{opacity:.35;transform:scale(.95)}100%{opacity:1;transform:scale(1)}}@keyframes c1-out{0%{opacity:.14;transform:translateY(2px)}100%{opacity:1;transform:translateY(0)}}@keyframes lf-emp{0%{opacity:.65}100%{opacity:0}}@keyframes lf-in{0%{opacity:0;background:transparent}25%{opacity:1;background:var(--as)}100%{opacity:1;background:transparent}}@keyframes c2-pill{0%{border-color:var(--ab)}5%,18%{border-color:var(--a)}24%,100%{border-color:var(--ab)}}@keyframes c2-vm{0%,23%{border-color:var(--ls)}26%,36%{border-color:var(--a)}42%,83%{border-color:var(--ls)}87%,95%{border-color:var(--a)}100%{border-color:var(--ab)}}@keyframes c2-host{0%,44%{border-color:var(--ls)}47%,56%{border-color:var(--a)}60%,62%{border-color:var(--ls)}65%,75%{border-color:var(--a)}84%,100%{border-color:var(--ab)}}@keyframes c2-sync{0%,88%{opacity:.35}94%,100%{opacity:1}}@keyframes c2-pkt-h{0%,5%{opacity:0;transform:translateX(-20px) scale(.7)}9%{opacity:1;transform:translateX(-16px) scale(1)}19%{opacity:1;transform:translateX(17px) scale(1)}22%,33%{opacity:0;transform:translateX(20px) scale(.7)}36%{opacity:1;transform:translateX(16px) scale(1)}46%{opacity:1;transform:translateX(-17px) scale(1)}49%,71%{opacity:0;transform:translateX(-20px) scale(.7)}74%{opacity:1;transform:translateX(-16px) scale(1)}84%{opacity:1;transform:translateX(17px) scale(1)}88%,100%{opacity:0;transform:translateX(20px) scale(.7)}}@keyframes c2-pkt-v{0%,5%{opacity:0;transform:translateY(-15px) scale(.7)}9%{opacity:1;transform:translateY(-12px) scale(1)}19%{opacity:1;transform:translateY(13px) scale(1)}22%,33%{opacity:0;transform:translateY(15px) scale(.7)}36%{opacity:1;transform:translateY(12px) scale(1)}46%{opacity:1;transform:translateY(-13px) scale(1)}49%,71%{opacity:0;transform:translateY(-15px) scale(.7)}74%{opacity:1;transform:translateY(-12px) scale(1)}84%{opacity:1;transform:translateY(13px) scale(1)}88%,100%{opacity:0;transform:translateY(15px) scale(.7)}}@keyframes c2-circle{0%,10%{transform:scale(1)}15%{transform:scale(1.09)}21%,37%{transform:scale(1)}42%{transform:scale(1.09)}48%,75%{transform:scale(1)}80%{transform:scale(1.09)}87%,100%{transform:scale(1)}}@keyframes c2c-host{0%,4%{border-color:var(--ls)}8%,18%{border-color:var(--a)}24%,83%{border-color:var(--ls)}87%,96%{border-color:var(--a)}100%{border-color:var(--ls)}}@keyframes c2c-vm{0%,20%{border-color:var(--ls)}24%,31%{border-color:var(--a)}34%,36%{border-color:var(--ls)}38%,58%{border-color:var(--a)}68%,100%{border-color:var(--ls)}}@keyframes c2c-host-l1{0%,100%{opacity:1;background:transparent}8%,18%{background:var(--as)}}@keyframes c2c-bridge{0%,28%{opacity:1}34%,68%{opacity:.3}72%,100%{opacity:1}}@keyframes c2c-st-wait{0%,32%{opacity:0}36%,82%{opacity:1}86%,100%{opacity:0}}@keyframes c2c-st-local{0%,34%{opacity:0}38%,72%{opacity:1}78%,100%{opacity:0}}@keyframes c2c-st-done{0%,88%{opacity:0}93%,100%{opacity:1}}@keyframes c2c-pkt-h{0%,6%{opacity:0;transform:translateX(-20px) scale(.7)}10%{opacity:1;transform:translateX(-16px) scale(1)}21%{opacity:1;transform:translateX(17px) scale(1)}25%,71%{opacity:0;transform:translateX(20px) scale(.7)}75%{opacity:1;transform:translateX(16px) scale(1)}85%{opacity:1;transform:translateX(-17px) scale(1)}89%,100%{opacity:0;transform:translateX(-20px) scale(.7)}}@keyframes c2c-pkt-v{0%,6%{opacity:0;transform:translateY(-15px) scale(.7)}10%{opacity:1;transform:translateY(-12px) scale(1)}21%{opacity:1;transform:translateY(13px) scale(1)}25%,71%{opacity:0;transform:translateY(15px) scale(.7)}75%{opacity:1;transform:translateY(12px) scale(1)}85%{opacity:1;transform:translateY(-13px) scale(1)}89%,100%{opacity:0;transform:translateY(-15px) scale(.7)}}@keyframes c2c-circle{0%,9%{transform:scale(1)}15%{transform:scale(1.09)}23%,73%{transform:scale(1)}80%{transform:scale(1.09)}88%,100%{transform:scale(1)}}@keyframes c3-br-l{0%,28%{stroke:var(--a);opacity:1;stroke-dashoffset:0}42%,100%{stroke:var(--ls);opacity:.48;stroke-dashoffset:-14}}@keyframes c3-box-a{0%,28%{border-color:var(--ls);box-shadow:none}34%,58%{border-color:var(--a);box-shadow:0 0 0 3px var(--lh)}76%,100%{border-color:var(--ab);box-shadow:none}}@keyframes c3-box-b{0%,28%{border-color:var(--ls)}36%,100%{border-color:var(--ok-b)}}@keyframes c3-wall{0%,28%{border-color:var(--ls);color:var(--m);transform:scale(1)}34%,58%{border-color:var(--a);color:var(--at);transform:scale(1.12)}76%,100%{border-color:var(--ls);color:var(--m);transform:scale(1)}}@keyframes c3-r-run{0%,27%{opacity:1}31%,100%{opacity:0}}@keyframes c3-r-err{0%,28%{opacity:0;transform:translateY(2px)}34%,100%{opacity:1;transform:translateY(0)}}@keyframes c3-r-ok{0%,30%{opacity:.9}42%,100%{opacity:1}}@keyframes c3-st-a{0%,28%{opacity:.3}35%,100%{opacity:1}}@keyframes c5-pkt-ok{0%,5%{opacity:0;left:4%}10%{opacity:1;left:8%}33%{opacity:1;left:92%}38%,100%{opacity:0;left:96%}}@keyframes c5-db{0%,30%{border-color:var(--ls)}36%,100%{border-color:var(--ok-b)}}@keyframes c5-res-ok{0%,32%{opacity:0;transform:scale(.94)}40%,100%{opacity:1;transform:scale(1)}}@keyframes c5-probe{0%,45%{opacity:0}52%,100%{opacity:.85}}@keyframes c5-pkt-blk{0%,47%{opacity:0;left:4%}52%{opacity:1;left:10%}66%{opacity:1;left:72%}70%,100%{opacity:0;left:76%}}@keyframes c5-x{0%,63%{transform:scale(1);box-shadow:none;border-color:var(--ab)}68%,78%{transform:scale(1.16);box-shadow:0 0 0 4px var(--lh);border-color:var(--a)}90%,100%{transform:scale(1);box-shadow:none;border-color:var(--ab)}}@keyframes c5-blk-tag{0%,65%{opacity:0;transform:translateY(2px)}74%,100%{opacity:1;transform:translateY(0)}}@media(max-width:1099px)and(min-width:961px){.hero{gap:28px}.term{font-size:11.5px;padding:16px 15px 18px}.art-native{padding:22px 20px 16px}.nf-node{padding:9px 10px;gap:7px}.nf-link{flex-basis:74px}.art-folders{padding:18px 16px 0}.lf-panel{padding:7px 8px}.ui-tag{font-size:9.5px;padding:1.5px 5px}.folder-bridge{width:34px}.art-vms{padding:16px 14px 0}.vm-pair{gap:6px;grid-template-columns:minmax(0,1fr) 18px minmax(0,1fr)}.art-commands{padding:20px 16px 12px}.cmd-picker{grid-template-columns:188px minmax(0,1fr);gap:12px}.cmd-detail{padding:11px 12px}.cd-cmd{font-size:11.5px}.art-networks{padding:18px 14px 12px}.net-diagram{grid-template-columns:minmax(0,1fr) 52px minmax(0,1fr)}.net-box{padding:9px 6px 8px}.net-title{font-size:10px}.net-node{padding:4px 5px;font-size:10px}.net-res{font-size:9.5px;padding:2px 5.5px}.net-defaults{gap:8px}.net-pill{font-size:10.5px;padding:4.5px 6px}.net-pill code{font-size:10.5px}}@media(max-width:960px){.hero{grid-template-columns:minmax(0,1fr);gap:32px;padding:28px 0 52px}.lede,.install,.alt{max-width:640px}.bento{grid-template-columns:repeat(2,minmax(0,1fr))}.fcard-native{grid-column:1/-1;grid-row:auto;min-height:0}.native-stage{max-width:540px;margin:0 auto}.fcard-native .fcard-copy{max-width:660px;padding-top:12px}.fcard-folders,.fcard-vms,.fcard-commands,.fcard-networks{grid-column:auto;grid-row:auto;min-height:290px;justify-content:space-between}.fcard-copy{padding:0 22px 24px}.fcard h3{font-size:18.5px}.art-folders{padding:20px 18px 0;gap:10px}.folder-flow{flex-direction:column;max-width:276px}.lf-panel{flex:none;width:100%}.folder-bridge{width:32px;height:36px}.folder-bridge::before{left:50%;right:auto;top:0;bottom:0;border-top:0;border-left:2px dashed var(--a)}[data-mode=live].is-playing .sync-packet{animation-name:c2-pkt-v}[data-mode=copy].is-playing .sync-packet{animation-name:c2c-pkt-v}.sync-icon-h{display:none}.sync-icon-v{display:block}.art-vms{padding:18px 14px 0}.vm-pair{gap:5px;grid-template-columns:minmax(0,1fr) 16px minmax(0,1fr)}.vm-box{padding:7px 6px}.vm-ct{padding:6px 6px}.vm-ct-name{font-size:10px}.vm-ct-cmd{font-size:9px}.vm-res-stack>span{font-size:9.5px;padding:1.5px 5px}.vm-box-head{font-size:10px}.vm-box-foot{font-size:9px}.art-commands{padding:20px 18px 14px}.cmd-picker{grid-template-columns:minmax(0,1fr);gap:12px}.art-networks{padding:20px 16px 14px}.net-defaults{gap:8px}.net-pill{font-size:10.5px;padding:4.5px 6px}.net-pill code{font-size:10.5px}.try-main{grid-template-columns:minmax(0,1fr);gap:20px}.try-lede{max-width:none}}@media(max-width:640px){.wrap{padding:0 16px}header{padding:18px 0}nav{gap:14px}nav a{padding:10px 4px}.hero{padding:20px 0 44px;gap:26px}.install{padding:7px 7px 7px 12px;gap:8px}.install code{font-size:12.5px}.install button{min-height:42px;padding:11px 15px;font-size:13.5px}.icopy{min-height:30px;padding:4px 7px}.alt,.try-lede{line-height:1.8}.term{padding:15px 14px 17px;font-size:11.5px;line-height:1.65}.features-section{padding:40px 0 28px}.bento{grid-template-columns:minmax(0,1fr);gap:16px}.fcard{border-radius:16px}.fcard-copy{padding:0 20px 22px}.fcard h3{font-size:18.5px}.art-native{padding:20px 16px 14px}.fcard-native .fcard-copy{max-width:none;padding-top:8px}.fcard-folders,.fcard-vms,.fcard-commands,.fcard-networks{min-height:0}.art-folders{padding:20px 18px 0}.art-vms{padding:20px 14px 0}.replay-btn{min-height:36px;padding:7px 11px;font-size:12px}.lf-mode-btn{min-height:40px;padding:8px 11px;font-size:11.5px;display:inline-flex;align-items:center;justify-content:center}.art-commands{padding:18px 18px 14px}.cmd-step{width:44px;height:44px}.art-networks{padding:18px 14px 12px}.try-card{padding:22px 18px;border-radius:16px}.try-actions a{flex:1 1 140px}}@media(max-width:480px){.install code{padding-right:22px;-webkit-mask-image:linear-gradient(to right,#000 0%,#000 calc(100% - 26px),transparent 100%);mask-image:linear-gradient(to right,#000 0%,#000 calc(100% - 26px),transparent 100%)}.native-flow{flex-direction:column;max-width:280px;margin:0 auto;width:100%}.nf-node{flex:none;width:100%}.nf-link{flex:none;width:100%;height:36px}.nf-track-h{display:none}.nf-track-v{display:block;position:absolute;left:50%;top:0;bottom:0;width:14px;height:100%;transform:translateX(-50%)}.run-head{padding:9px 11px}.run-cmd{font-size:11px}.run-body{padding:12px 12px 11px}.run-out{padding:8px 10px;font-size:11px}.run-out-line{grid-template-columns:108px minmax(0,1fr)}.net-pill{font-size:10px;padding:4.5px 5px;gap:4px}.net-pill code{font-size:10px}.vm-box-foot{font-size:8.5px}.net-diagram{grid-template-columns:minmax(0,1fr) 48px minmax(0,1fr)}.net-node{font-size:9.5px;padding:3.5px 4.5px;gap:3px}.net-blk-tag{font-size:9px;padding:1.5px 4.5px}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none !important;transition:none !important;scroll-behavior:auto !important}.sync-packet,.net-pkt-ok,.net-pkt-blk{opacity:0}.replay-btn{display:none}}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-cp" viewBox="0 0 14 14" fill="none"><rect x="4.8" y="4.8" width="7.2" height="7.2" rx="1.4" stroke="currentColor" stroke-width="1.35"/><path d="M9.2 4.8V3.2A1.2 1.2 0 0 0 8 2H3.2A1.2 1.2 0 0 0 2 3.2V8a1.2 1.2 0 0 0 1.2 1.2h1.6" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/></symbol><symbol id="i-ck" viewBox="0 0 14 14" fill="none"><path d="M2.5 7.4 5.5 10.4 11.5 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></symbol></svg>
 <div class="wrap">
-  <header>
-    <a class="brand" href="/">ki<span>do</span></a>
-    <nav>
-      <a href="https://github.com/kido-sh/kido#readme">Docs</a>
-      <a href="https://github.com/kido-sh/kido">GitHub</a>
-    </nav>
-  </header>
-
-  <main>
-    <div class="hero">
-      <h1>macOS command-line tools in tiny Darwin containers.</h1>
-      <p class="lede">kido runs tools built for macOS on Apple Silicon in their own micro-VMs. Each container boots an open-source Darwin guest in under a second. No root, and no Linux VM in between.</p>
-      <div class="install">
-        <code id="cmd">curl -fsSL https://kido.sh/install.sh | sh</code>
-        <button type="button" id="copy">Copy</button>
-      </div>
-      <p class="alt">Or <code>brew install kido-sh/tap/kido</code>, or build from <a href="https://github.com/kido-sh/kido">source</a>.</p>
-      <pre class="term"><span class="p">$ </span>kido run --rm darwin uname -sm
-<span class="o">Darwin arm64</span>
-<span class="p">$ </span>kido build -t adb:37 adb-image/
-<span class="o">Successfully tagged adb:37</span>
-<span class="p">$ </span>kido run --rm adb:37
-<span class="o">Android Debug Bridge version 1.0.41</span></pre>
-    </div>
-
-    <section>
-      <h2>What you get</h2>
-      <div class="grid">
-        <div class="card"><h3>Fast</h3><p>A one-shot <code>kido run --rm</code> takes under a second. <code>kido cp</code> moves 64 MB in about a second or less.</p></div>
-        <div class="card"><h3>Everyday commands</h3><p><code>run</code>, <code>exec</code>, <code>cp</code>, <code>logs</code>, <code>commit</code>, <code>build</code> from a Dockerfile, <code>push</code> and <code>pull</code> through any OCI registry.</p></div>
-        <div class="card"><h3>Isolated</h3><p>Every container is its own virtual machine. The host talks to its guest agent over a mutually authenticated, encrypted channel.</p></div>
-        <div class="card"><h3>Networks</h3><p>User networks that cannot reach each other, <code>--network none</code>, and published ports on 127.0.0.1 by default.</p></div>
-        <div class="card"><h3>Two backends</h3><p>Apple's Virtualization.framework by default, or QEMU with Hypervisor.framework.</p></div>
-        <div class="card"><h3>Unmodified binaries</h3><p>Tools built for macOS arm64 run as they are: no rebuild, no shims.</p></div>
-      </div>
-    </section>
-
-    <section>
-      <h2>Status</h2>
-      <p class="status">kido is experimental. Commands, the image format and the protocol between kido and its guest agent may still change. The first release and a downloadable base image are on their way; until then, build kido from source. Read the <a href="https://github.com/kido-sh/kido#readme">README</a> for setup, the security model and current limits.</p>
-    </section>
-  </main>
-
-  <footer>
-    <p>kido is open source under the Apache License 2.0. Its guest builds on PureDarwin, xnu-loader and Apple's open-source Darwin releases: see the <a href="https://github.com/kido-sh/kido#acknowledgements">acknowledgements</a>.</p>
-    <p>kido is an independent project, not affiliated with Apple.</p>
-  </footer>
+<header>
+<a class="brand" href="/">
+<svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="var(--a)"/><path d="M20 14v36M20 34l18-18M27 28l14 22" stroke="var(--af)" stroke-width="7" stroke-linecap="round" fill="none"/></svg>
+<span class="brand-word">ki<em>do</em></span>
+</a>
+<nav aria-label="Primary">
+<a href="https://github.com/kido-sh/kido">GitHub</a>
+</nav>
+</header>
+<main>
+<div class="hero">
+<div class="hero-copy">
+<h1>Fast, lightweight macOS micro-VMs.</h1>
+<p class="lede">Isolated, disposable Darwin guests on Apple Silicon and ARM64 Linux. Unmodified macOS arm64 binaries, sub-second boot.</p>
+<div class="install">
+<code id="cmd">curl -fsSL https://kido.sh/install.sh | sh</code>
+<button type="button" id="copy" data-copy="cmd">Copy</button>
 </div>
-<script>
-document.getElementById("copy").addEventListener("click", function () {
-  var b = this, text = document.getElementById("cmd").textContent;
-  var done = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy"; }, 1500); };
-  if (navigator.clipboard) { navigator.clipboard.writeText(text).then(done); return; }
-  var t = document.createElement("textarea");
-  t.value = text; document.body.appendChild(t); t.select();
-  try { document.execCommand("copy"); done(); } finally { document.body.removeChild(t); }
-});
-</script>
+<p class="alt">Or <button type="button" class="icopy" data-copy-text="brew install kido-sh/tap/kido" aria-label="Copy command: brew install kido-sh/tap/kido">brew install kido-sh/tap/kido<span class="ic-ico" aria-hidden="true"><svg class="ic-c" width="11" height="11"><use href="#i-cp"/></svg><svg class="ic-k" width="11" height="11"><use href="#i-ck"/></svg></span></button>, or build from <a href="https://github.com/kido-sh/kido">source</a>. Then run <button type="button" class="icopy" data-copy-text="kido setup" aria-label="Copy command: kido setup">kido setup<span class="ic-ico" aria-hidden="true"><svg class="ic-c" width="11" height="11"><use href="#i-cp"/></svg><svg class="ic-k" width="11" height="11"><use href="#i-ck"/></svg></span></button> to pull the Darwin base image, about 30&nbsp;MB.</p>
+</div>
+<div class="term-shell">
+<div class="term-bar" aria-hidden="true">
+<div class="term-dots"><span></span><span></span><span></span></div>
+<span class="term-title">kido</span>
+</div>
+<pre class="term"><span class="p">$ </span>kido run --rm darwin uname -srm
+<span class="ok">Darwin 25.5.0 arm64</span>
+<span class="p">$ </span>kido run --rm darwin sw_vers
+<span class="o">ProductName:    </span><span class="ok">KidoDarwin</span>
+<span class="o">ProductVersion: </span>26.5
+<span class="o">BuildVersion:   </span>25F74
+<span class="p">$ </span>kido run --rm darwin sysctl kern.osproductversion hw.model
+<span class="o">kern.osproductversion: </span>26.5
+<span class="o">hw.model: </span><span class="ok">VirtualMac2,1</span>
+<span class="p">$ </span><span class="term-cursor" aria-hidden="true"></span></pre>
+</div>
+</div>
+<section class="features-section" aria-labelledby="features-heading">
+<div class="section-head">
+<h2 id="features-heading">What you get</h2>
+<p class="section-sub">Clean, disposable Darwin environments with the workflow of everyday containers.</p>
+</div>
+<div class="bento">
+<article class="fcard fcard-native fcard-anim">
+<div class="art-native" aria-hidden="true">
+<div class="native-stage">
+<div class="native-flow">
+<div class="nf-node">
+<div class="ui-icon ui-icon-neutral">
+<svg width="15" height="15" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="3.5" width="15" height="13" rx="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M6.5 8.5l2.5 2-2.5 2M10.5 12.5h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</div>
+<div class="ui-panel-meta">
+<span class="nf-title">macOS arm64</span>
+<span class="nf-sub">unmodified binary</span>
+</div>
+</div>
+<div class="nf-link">
+<svg class="nf-track-svg nf-track-h" viewBox="0 0 96 14" preserveAspectRatio="none" fill="none"><line class="nf-dash" x1="2" y1="7" x2="94" y2="7" stroke="var(--a)" stroke-width="1.8"/></svg>
+<svg class="nf-track-svg nf-track-v" viewBox="0 0 14 36" preserveAspectRatio="none" fill="none"><line class="nf-dash" x1="7" y1="2" x2="7" y2="34" stroke="var(--a)" stroke-width="1.8"/></svg>
+<span class="nf-badge">
+<svg width="10" height="10" viewBox="0 0 14 14" fill="none"><path d="M8 1.5 3 8h4l-1 4.5L11 6H7l1-4.5Z" fill="currentColor"/></svg>
+native
+</span>
+</div>
+<div class="nf-node nf-node-target">
+<div class="ui-icon ui-icon-accent">
+<svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M10 2.5 16.5 6v8L10 17.5 3.5 14V6L10 2.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 10l6.5-4M10 10v7.5M10 10 3.5 6" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+</div>
+<div class="ui-panel-meta">
+<span class="nf-title">Darwin guest</span>
+</div>
+</div>
+</div>
+<div class="run-card">
+<div class="run-head">
+<span class="run-cmd"><span class="p">$</span><span class="run-cmd-type">kido run --rm darwin sw_vers</span></span>
+<span class="run-time">&lt; 1s</span>
+</div>
+<div class="run-body">
+<div class="run-stages">
+<span class="run-stage-1">Boot guest</span>
+<span class="run-stage-2">Run binary</span>
+<span class="run-stage-3">
+<svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M2.8 7.4 5.7 10.3 11.4 4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+Exit
+</span>
+</div>
+<div class="run-track">
+<span class="run-seg run-seg-1"><span class="run-fill run-fill-1"></span></span>
+<span class="run-seg run-seg-2"><span class="run-fill run-fill-2"></span></span>
+<span class="run-seg run-seg-3"><span class="run-fill run-fill-3"></span></span>
+</div>
+<div class="run-out">
+<div class="run-out-line"><span class="run-out-k">ProductName:</span><span class="run-out-v run-out-v-accent">KidoDarwin</span></div>
+<div class="run-out-line"><span class="run-out-k">ProductVersion:</span><span class="run-out-v">26.5</span></div>
+<div class="run-out-line"><span class="run-out-k">BuildVersion:</span><span class="run-out-v">25F74</span></div>
+</div>
+<div class="run-meta">
+<span class="run-meta-item">
+<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="2.5" y="2.5" width="11" height="11" rx="3" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 8.2 7.2 9.9 10.7 6.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+Disposable micro-VM
+</span>
+<span class="run-meta-item">
+<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M3.5 13c.7-2.2 2.3-3.2 4.5-3.2s3.8 1 4.5 3.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+No root needed
+</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="fcard-copy">
+<div class="fcard-head">
+<h3>Native speed, zero shims</h3>
+<button type="button" class="replay-btn" aria-label="Replay native speed animation"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.4-3.5M13 2.5v3h-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Replay</button>
+</div>
+<p>Unmodified macOS arm64 binaries like <code>sw_vers</code> and <code>uname</code> run natively in under a second, with no rebuilds and no emulator overhead. Runs on Virtualization.framework on macOS, or KVM on ARM64 Linux.</p>
+</div>
+</article>
+<article class="fcard fcard-folders fcard-anim" data-mode="live">
+<div class="art-folders">
+<div class="folder-flow" aria-hidden="true">
+<div class="lf-panel panel-host">
+<div class="lf-head">
+<span class="lf-id">
+<span class="lf-ico"><svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M2.5 5.5A1.5 1.5 0 0 1 4 4h4l1.6 1.8H16A1.5 1.5 0 0 1 17.5 7.3v7.2A1.5 1.5 0 0 1 16 16H4a1.5 1.5 0 0 1-1.5-1.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></span>
+<span class="ui-path">~/project</span>
+</span>
+<span class="ui-tag">Host</span>
+</div>
+<div class="lf-file">
+<div class="lf-fname"><span>hello.txt</span><span class="lf-status"><span class="lf-st-live">in sync</span><span class="lf-st-wait">unchanged</span><span class="lf-st-done">copied on exit</span></span></div>
+<div class="lf-lines">
+<span class="lf-empty lf-empty-h">empty</span>
+<span class="lf-line lf-host-1"><span class="lf-ln">1</span><span class="lf-txt">hello darwin</span></span>
+<span class="lf-line lf-host-2"><span class="lf-ln">2</span><span class="lf-txt">hi from host</span></span>
+</div>
+</div>
+</div>
+<div class="folder-bridge">
+<span class="sync-packet"></span>
+<span class="sync-circle">
+<svg class="sync-icon-h" width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M5.5 4.5 2 8l3.5 3.5M2.5 8h11M10.5 4.5 14 8l-3.5 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<svg class="sync-icon-v" width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M4.5 5.5 8 2l3.5 3.5M8 2.5v11M11.5 10.5 8 14l-3.5-3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</span>
+</div>
+<div class="lf-panel panel-vm">
+<div class="lf-head">
+<span class="lf-id">
+<span class="lf-ico"><svg width="14" height="14" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="3.5" width="15" height="13" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M6.5 8.5l2.5 2-2.5 2M10.5 12.5h3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+<span class="ui-path">/src</span>
+</span>
+<span class="ui-tag">Micro-VM</span>
+</div>
+<div class="lf-file">
+<div class="lf-fname"><span>hello.txt</span><span class="lf-status"><span class="lf-st-live">in sync</span><span class="lf-st-local">local write</span><span class="lf-st-done">copied on exit</span></span></div>
+<div class="lf-lines">
+<span class="lf-empty lf-empty-v">empty</span>
+<span class="lf-line lf-vm-1"><span class="lf-ln">1</span><span class="lf-txt">hello darwin</span></span>
+<span class="lf-line lf-vm-2"><span class="lf-ln">2</span><span class="lf-txt">hi from host</span></span>
+</div>
+</div>
+</div>
+</div>
+<div class="folder-modes" role="group" aria-label="Folder sharing mode">
+<button type="button" class="lf-mode-btn is-active" data-lf-mode="live" aria-pressed="true">-v ~/project:/src</button>
+<span class="lf-mode-or">or</span>
+<button type="button" class="lf-mode-btn" data-lf-mode="copy" aria-pressed="false">--copy-mounts</button>
+</div>
+</div>
+<div class="fcard-copy">
+<div class="fcard-head">
+<h3>Live folders <span class="pill pill-accent">Beta</span></h3>
+<button type="button" class="replay-btn" aria-label="Replay live folders animation"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.4-3.5M13 2.5v3h-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Replay</button>
+</div>
+<p>In beta since 0.2.0. Share a host folder live with <code>-v ~/project:/src</code> so edits on either side appear immediately, or add <code>--copy-mounts</code> to copy files in at boot and back on exit.</p>
+</div>
+</article>
+<article class="fcard fcard-vms fcard-anim">
+<div class="art-vms" aria-hidden="true">
+<div class="vm-scene">
+<div class="vm-host-bar">
+<svg width="14" height="14" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M1.8 16h16.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+<span class="vm-host-id"><span>Host</span><code>kido</code></span>
+<span class="vm-host-enc">encrypted channels</span>
+</div>
+<svg class="vm-branches" viewBox="0 0 420 24" preserveAspectRatio="none" fill="none"><path class="enc-flow enc-left" d="M210 0 V9 H102 V24" stroke-width="1.6"/><path class="enc-flow enc-right" d="M210 0 V9 H318 V24" stroke-width="1.6"/></svg>
+<div class="vm-pair">
+<div class="vm-box vm-box-a">
+<div class="vm-box-head">
+<span class="vm-box-title">Micro-VM 1</span>
+<span class="vm-lock-mini">
+<svg width="9" height="9" viewBox="0 0 16 16" fill="none"><rect x="3.2" y="7.2" width="9.6" height="6.8" rx="1.8" fill="currentColor"/><path d="M5.3 7.2V5.4a2.7 2.7 0 0 1 5.4 0v1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+</span>
+</div>
+<div class="vm-ct">
+<div class="vm-ct-row">
+<span class="vm-ct-name">Container A</span>
+<span class="vm-ct-cmd">$ rm -rf /</span>
+</div>
+<div class="vm-res-stack">
+<span class="vm-r-run">running</span>
+<span class="vm-r-err"><svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3 3 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>exited 137</span>
+</div>
+</div>
+<div class="vm-box-foot">
+<span>Own Darwin kernel</span>
+<span class="vm-state-a">contained</span>
+</div>
+</div>
+<div class="vm-wall-col">
+<span class="vm-wall-badge"><svg width="10" height="10" viewBox="0 0 14 14" fill="none"><path d="M7 1.5 11.5 3.3v3.5c0 2.7-1.9 4.8-4.5 5.7C4.4 11.6 2.5 9.5 2.5 6.8V3.3L7 1.5Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/></svg></span>
+</div>
+<div class="vm-box vm-box-b">
+<div class="vm-box-head">
+<span class="vm-box-title">Micro-VM 2</span>
+<span class="vm-lock-mini">
+<svg width="9" height="9" viewBox="0 0 16 16" fill="none"><rect x="3.2" y="7.2" width="9.6" height="6.8" rx="1.8" fill="currentColor"/><path d="M5.3 7.2V5.4a2.7 2.7 0 0 1 5.4 0v1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+</span>
+</div>
+<div class="vm-ct">
+<div class="vm-ct-row">
+<span class="vm-ct-name">Container B</span>
+<span class="vm-ct-cmd">api :8080</span>
+</div>
+<div class="vm-res-stack">
+<span class="vm-r-ok"><svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2.2 6.3 4.8 8.9 9.8 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>200 OK</span>
+</div>
+</div>
+<div class="vm-box-foot">
+<span>Own Darwin kernel</span>
+<span class="vm-state-b">unaffected</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="fcard-copy">
+<div class="fcard-head">
+<h3>A micro-VM per container</h3>
+<button type="button" class="replay-btn" aria-label="Replay micro-VM isolation animation"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.4-3.5M13 2.5v3h-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Replay</button>
+</div>
+<p>Every container is its own virtual machine. The host talks to the guest agent over a mutually authenticated, encrypted channel.</p>
+</div>
+</article>
+<article class="fcard fcard-commands">
+<div class="art-commands">
+<div class="cmd-picker">
+<div class="cmd-wheel-wrap">
+<div class="cmd-wheel-frame">
+<div class="cmd-band" aria-hidden="true"></div>
+<div class="cmd-wheel" id="cmd-wheel" role="listbox" tabindex="0" aria-label="Choose a kido command" aria-activedescendant="cw-2">
+<button type="button" class="cmd-opt" id="cw-0" role="option" aria-selected="false" tabindex="-1">build</button>
+<button type="button" class="cmd-opt is-near" id="cw-1" role="option" aria-selected="false" tabindex="-1">pull</button>
+<button type="button" class="cmd-opt is-active" id="cw-2" role="option" aria-selected="true" tabindex="-1">run</button>
+<button type="button" class="cmd-opt is-near" id="cw-3" role="option" aria-selected="false" tabindex="-1">exec</button>
+<button type="button" class="cmd-opt" id="cw-4" role="option" aria-selected="false" tabindex="-1">cp</button>
+<button type="button" class="cmd-opt" id="cw-5" role="option" aria-selected="false" tabindex="-1">logs</button>
+<button type="button" class="cmd-opt" id="cw-6" role="option" aria-selected="false" tabindex="-1">commit</button>
+<button type="button" class="cmd-opt" id="cw-7" role="option" aria-selected="false" tabindex="-1">push</button>
+<button type="button" class="cmd-opt" id="cw-8" role="option" aria-selected="false" tabindex="-1">images</button>
+<button type="button" class="cmd-opt" id="cw-9" role="option" aria-selected="false" tabindex="-1">ps</button>
+<button type="button" class="cmd-opt" id="cw-10" role="option" aria-selected="false" tabindex="-1">inspect</button>
+<button type="button" class="cmd-opt" id="cw-11" role="option" aria-selected="false" tabindex="-1">network</button>
+<button type="button" class="cmd-opt" id="cw-12" role="option" aria-selected="false" tabindex="-1">stop</button>
+<button type="button" class="cmd-opt" id="cw-13" role="option" aria-selected="false" tabindex="-1">rm</button>
+</div>
+</div>
+<div class="cmd-steps">
+<button type="button" class="cmd-step" id="cmd-prev" aria-label="Previous command"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 10l4-4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+<button type="button" class="cmd-step" id="cmd-next" aria-label="Next command"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+</div>
+<div class="cmd-detail" aria-live="polite">
+<div class="cd-top">
+<span class="cd-badge" id="cd-tag">Lifecycle</span>
+<span class="cd-count" id="cd-count">3 / 14</span>
+</div>
+<div class="cd-term">
+<div class="cd-cmd"><span class="p">$</span><code id="cd-cmd">kido run --rm darwin sw_vers</code></div>
+<div class="cd-out" id="cd-out">ProductName: KidoDarwin 26.5</div>
+<div class="cd-file" id="cd-file" hidden>
+<span><span class="kf-k">FROM</span> darwin</span>
+<span><span class="kf-k">COPY</span> ./tool /usr/local/bin/</span>
+<span><span class="kf-k">RUN</span> chmod +x /usr/local/bin/tool</span>
+<span><span class="kf-k">CMD</span> ["tool"]</span>
+</div>
+</div>
+<p class="cd-desc" id="cd-desc">Run an unmodified binary in a fresh micro&#8209;VM.</p>
+</div>
+</div>
+</div>
+<div class="fcard-copy">
+<h3>Everyday commands</h3>
+<p>Build from a <button type="button" class="kf-jump" id="kf-jump">Kidofile</button> using familiar <code>FROM</code>, <code>COPY</code>, <code>RUN</code> and <code>CMD</code> instructions, push and pull through any OCI registry, and manage guests with everyday container commands.</p>
+</div>
+</article>
+<article class="fcard fcard-networks fcard-anim">
+<div class="art-networks" aria-hidden="true">
+<div class="net-diagram">
+<div class="net-box net-box-a">
+<span class="net-title">User network A</span>
+<div class="net-nodes">
+<span class="net-node"><span class="net-dot net-dot-a"></span>web</span>
+<span class="net-wire net-wire-a"><span class="net-pkt-ok"></span></span>
+<span class="net-node net-node-db"><span class="net-dot net-dot-a"></span>db</span>
+</div>
+<span class="net-res net-res-ok"><svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2.2 6.3 4.8 8.9 9.8 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>200 OK</span>
+</div>
+<div class="net-wall">
+<span class="net-wall-sp" aria-hidden="true"></span>
+<div class="net-x-row">
+<span class="net-probe"><span class="net-pkt-blk"></span></span>
+<span class="net-x"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3 3 9" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></span>
+</div>
+<span class="net-blk-tag">blocked</span>
+</div>
+<div class="net-box net-box-b">
+<span class="net-title">User network B</span>
+<div class="net-nodes">
+<span class="net-node"><span class="net-dot net-dot-b"></span>api</span>
+<span class="net-wire"></span>
+<span class="net-node"><span class="net-dot net-dot-b"></span>job</span>
+</div>
+<span class="net-res net-res-quiet">no traffic</span>
+</div>
+</div>
+<div class="net-defaults">
+<span class="net-pill net-pill-left">
+<svg class="net-pill-icon" width="12" height="12" viewBox="0 0 14 14" fill="none"><rect x="3" y="6.2" width="8" height="5.8" rx="1.4" stroke="currentColor" stroke-width="1.3"/><path d="M4.8 6.2V4.7a2.2 2.2 0 0 1 4.4 0v1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+<code>127.0.0.1</code> default
+</span>
+<span class="net-pill net-pill-subtle net-pill-right">
+<svg class="net-pill-icon" width="12" height="12" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.4"/><line x1="3.6" y1="10.4" x2="10.4" y2="3.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+<code>--network none</code>
+</span>
+</div>
+</div>
+<div class="fcard-copy">
+<div class="fcard-head">
+<h3>Isolated networks</h3>
+<button type="button" class="replay-btn" aria-label="Replay network isolation animation"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.4-3.5M13 2.5v3h-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Replay</button>
+</div>
+<p>User networks cannot reach each other, <code>--network none</code> disables networking, and published ports bind to <code>127.0.0.1</code> by default.</p>
+</div>
+</article>
+</div>
+</section>
+<section class="try-section" aria-labelledby="try-heading">
+<div class="try-card">
+<div class="try-main">
+<div class="try-copy">
+<div class="try-head">
+<h2 id="try-heading">Try kido</h2>
+<span class="pill pill-neutral">v0.2.0</span>
+</div>
+<p class="try-lede">One command on Apple Silicon or ARM64 Linux. Then run <button type="button" class="icopy" data-copy-text="kido setup" aria-label="Copy command: kido setup">kido setup<span class="ic-ico" aria-hidden="true"><svg class="ic-c" width="11" height="11"><use href="#i-cp"/></svg><svg class="ic-k" width="11" height="11"><use href="#i-ck"/></svg></span></button> to pull the 30&nbsp;MB Darwin base image.</p>
+<div class="try-actions">
+<a class="gh-cta" href="https://github.com/kido-sh/kido"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 .2a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8.01 8.01 0 0 0 8 .2Z"/></svg>Star on GitHub</a>
+<a class="status-link" href="https://github.com/kido-sh/kido#readme">Read the README <span aria-hidden="true">&rarr;</span></a>
+</div>
+</div>
+<div class="try-install">
+<div class="install">
+<code id="cmd-bottom">curl -fsSL https://kido.sh/install.sh | sh</code>
+<button type="button" id="copy-bottom" data-copy="cmd-bottom">Copy</button>
+</div>
+<p class="alt try-alt">Or <button type="button" class="icopy" data-copy-text="brew install kido-sh/tap/kido" aria-label="Copy command: brew install kido-sh/tap/kido">brew install kido-sh/tap/kido<span class="ic-ico" aria-hidden="true"><svg class="ic-c" width="11" height="11"><use href="#i-cp"/></svg><svg class="ic-k" width="11" height="11"><use href="#i-ck"/></svg></span></button>, or build from <a href="https://github.com/kido-sh/kido">source</a>.</p>
+</div>
+</div>
+<div class="try-status">
+<p class="try-note">Commands, the image format and the guest agent protocol may change before 1.0. See the <a href="https://github.com/kido-sh/kido#readme">README</a> for setup, the security model and current limits.</p>
+</div>
+</div>
+</section>
+</main>
+<footer>
+<p>kido is open source under the Apache License 2.0. Its guest builds on PureDarwin, xnu-loader and Apple's open-source Darwin releases: see the <a href="https://github.com/kido-sh/kido#acknowledgements">acknowledgements</a>.</p>
+<p>kido is an independent project, not affiliated with Apple.</p>
+</footer>
+</div>
+<script>(function(){var d=document,g=function(i){return d.getElementById(i);},q=function(s,r){return(r||d).querySelectorAll(s);},rm=function(){return!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);};var cp=function(x,ok){var fb=function(){var t=d.createElement('textarea');t.value=x;d.body.appendChild(t);t.select();try{d.execCommand('copy');ok();}finally{d.body.removeChild(t);}};navigator.clipboard?navigator.clipboard.writeText(x).then(ok,fb):fb();};q('[data-copy]').forEach(function(b){b.onclick=function(){var s=g(b.getAttribute('data-copy'));if(s)cp(s.textContent,function(){b.textContent='Copied';clearTimeout(b._t);b._t=setTimeout(function(){b.textContent='Copy';},1500);});};});q('[data-copy-text]').forEach(function(b){b.onclick=function(){cp(b.getAttribute('data-copy-text'),function(){q('.icopy.is-copied').forEach(function(x){if(x!==b){x.classList.remove('is-copied');clearTimeout(x._t);}});b.classList.add('is-copied');clearTimeout(b._t);b._t=setTimeout(function(){b.classList.remove('is-copied');},1400);});};});var w=g('cmd-wheel');if(w){var D=[["Kidofile","build -t app .","","Build a Darwin image from a Kidofile."],["OCI registry","pull ghcr.io/your/image","Pulled ghcr.io/your/image","Pull an image from an OCI registry."],["Lifecycle","run --rm darwin sw_vers","ProductName: KidoDarwin 26.5","Run an unmodified binary in a fresh micro‑VM."],["Lifecycle","exec dev /bin/sh","sh-3.2#","Run a command or shell inside a running guest."],["Files","cp ./tool dev:/usr/local/bin/","Copied ./tool to dev:/usr/local/bin/tool","Copy files between the host and a container."],["Inspect","logs -f dev","listening on 127.0.0.1:8080","Stream container stdout and stderr."],["Image","commit dev app:1","sha256:9f84b1c2e7a0...","Save a container filesystem as a new image."],["OCI registry","push ghcr.io/your/app:1","Pushed ghcr.io/your/app:1","Push an image to any OCI registry."],["Image","images","darwin   latest   31 MB","List local Darwin images."],["Inspect","ps -a","dev   darwin   running   12s","List running and stopped containers."],["Inspect","inspect dev","{\"name\":\"dev\",\"state\":\"running\"}","Show low-level metadata as JSON."],["Networking","network create appnet","Created network appnet","Create and manage isolated user networks."],["Lifecycle","stop dev","Stopped dev","Send SIGTERM and stop a running container."],["Lifecycle","rm -f dev","Removed dev","Remove one or more containers."]],H=44,os=q('.cmd-opt',w),pv=g('cmd-prev'),nx=g('cmd-next'),tg=g('cd-tag'),cn=g('cd-count'),cm=g('cd-cmd'),ou=g('cd-out'),fl=g('cd-file'),ds=g('cd-desc'),kj=g('kf-jump'),ci=2,lk=-1,lt=0,rf=0;var pt=function(i){ci=i;w.setAttribute('aria-activedescendant','cw-'+i);os.forEach(function(o,j){var k=Math.abs(j-i);o.classList.toggle('is-active',!k);o.classList.toggle('is-near',k===1);o.setAttribute('aria-selected',!k?'true':'false');});var r=D[i];tg.textContent=r[0];cn.textContent=(i+1)+' / '+D.length;cm.textContent='kido '+r[1];ou.textContent=r[2];ou.hidden=!r[2];if(fl)fl.hidden=i!==0;ds.textContent=r[3];pv.disabled=!i;nx.disabled=i===D.length-1;};var go=function(i,n){i=Math.max(0,Math.min(D.length-1,i));pt(i);clearTimeout(lt);if(n||rm()){lk=-1;w.scrollTop=i*H;return;}lk=i;w.scrollTo({top:i*H,behavior:'smooth'});lt=setTimeout(function(){lk=-1;},420);};var ul=function(){lk=-1;clearTimeout(lt);};['wheel','touchstart','pointerdown'].forEach(function(e){w.addEventListener(e,ul,{passive:true});});w.addEventListener('scroll',function(){if(rf)return;rf=requestAnimationFrame(function(){rf=0;var i=Math.max(0,Math.min(D.length-1,Math.round(w.scrollTop/H)));if(lk!==-1){if(Math.abs(w.scrollTop-lk*H)<2)ul();return;}if(i!==ci)pt(i);});},{passive:true});os.forEach(function(o,i){o.onclick=function(){go(i);};});pv.onclick=function(){go(ci-1);};nx.onclick=function(){go(ci+1);};if(kj)kj.onclick=function(){go(0);};w.onkeydown=function(e){var k=e.key;if(k==='ArrowDown'||k==='ArrowUp'||k==='Home'||k==='End'){e.preventDefault();go(k==='ArrowDown'?ci+1:k==='ArrowUp'?ci-1:k==='Home'?0:D.length-1);}};go(2,1);requestAnimationFrame(function(){w.scrollTop=ci*H;});}var cs=q('.fcard-anim'),pl=function(c){if(rm())return;clearTimeout(c._pt);c.classList.remove('is-playing');void c.offsetWidth;c.classList.add('is-playing');c._pt=setTimeout(function(){c.classList.remove('is-playing');},3400);};var lf=d.querySelector('.fcard-folders');if(lf){var lb=q('.lf-mode-btn',lf),tx={live:['hello darwin','hi from host'],copy:['input','hello darwin']};lb.forEach(function(b){b.onclick=function(){var m=b.getAttribute('data-lf-mode');lf.setAttribute('data-mode',m);lb.forEach(function(x){var on=x.getAttribute('data-lf-mode')===m;x.classList.toggle('is-active',on);x.setAttribute('aria-pressed',on?'true':'false');});var l=tx[m]||tx.live;q('.lf-host-1 .lf-txt,.lf-vm-1 .lf-txt',lf).forEach(function(e){e.textContent=l[0];});q('.lf-host-2 .lf-txt,.lf-vm-2 .lf-txt',lf).forEach(function(e){e.textContent=l[1];});pl(lf);};});}if(rm())return;cs.forEach(function(c){var b=c.querySelector('.replay-btn');if(b)b.onclick=function(){pl(c);};});if(!('IntersectionObserver'in window)){cs.forEach(pl);return;}var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){pl(e.target);io.unobserve(e.target);}});},{threshold:.35});cs.forEach(function(c){io.observe(c);});})();</script>
 </body>
 </html>
