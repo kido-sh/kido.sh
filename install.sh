@@ -31,7 +31,15 @@ USAGE
 	exit 2
 }
 
-sha256_of() { shasum -a 256 "$1" | awk '{print $1}'; }
+sha256_of() {
+	if command -v shasum >/dev/null 2>&1; then
+		shasum -a 256 "$1" | awk '{print $1}'
+	elif command -v sha256sum >/dev/null 2>&1; then
+		sha256sum "$1" | awk '{print $1}'
+	else
+		die "need shasum or sha256sum to verify downloads"
+	fi
+}
 
 sum_for() { awk -v n="$2" '$2 == n || $2 == "*" n { print $1; exit }' "$1"; }
 
@@ -75,8 +83,22 @@ main() {
 		esac
 	done
 
-	[ "$(uname -s)" = Darwin ] || die "kido runs on macOS only"
-	[ "$(sysctl -n hw.optional.arm64 2>/dev/null || echo 0)" = 1 ] || die "kido needs an Apple Silicon Mac"
+	host_os=$(uname -s)
+	case $host_os in
+	Darwin)
+		[ "$(sysctl -n hw.optional.arm64 2>/dev/null || echo 0)" = 1 ] || die "kido needs an Apple Silicon Mac"
+		target=darwin-arm64
+		;;
+	Linux)
+		case $(uname -m) in
+		aarch64 | arm64) target=linux-arm64 ;;
+		*) die "kido needs an arm64 (aarch64) Linux host, got: $(uname -m)" ;;
+		esac
+		;;
+	*)
+		die "kido runs on macOS (arm64) and Linux (arm64) only, got: $host_os"
+		;;
+	esac
 	[ "$(id -u)" != 0 ] || die "run this as your own user, not root: kido needs no sudo"
 	case $prefix in
 	/*) ;;
@@ -104,7 +126,7 @@ main() {
 		archive=$tarball
 	else
 		[ "$version" != latest ] || version=$(latest_version "$repo")
-		name=kido-$version-darwin-arm64.tar.gz
+		name=kido-$version-$target.tar.gz
 		base=https://github.com/$repo/releases/download/v$version
 		say "Downloading kido $version from $base"
 		download "$base/$name" "$tmp/$name"
@@ -138,7 +160,17 @@ main() {
 
 	case ":$PATH:" in
 	*":$prefix/bin:"*) ;;
-	*) say "note: $prefix/bin is not on PATH; add it, e.g.: echo 'export PATH=\"$prefix/bin:\$PATH\"' >> ~/.zprofile" ;;
+	*)
+		if [ "$host_os" = Darwin ]; then
+			rc='~/.zprofile'
+		else
+			case ${SHELL:-} in
+			*/bash) rc='~/.bashrc' ;;
+			*) rc='~/.profile' ;;
+			esac
+		fi
+		say "note: $prefix/bin is not on PATH; add it, e.g.: echo 'export PATH=\"$prefix/bin:\$PATH\"' >> $rc"
+		;;
 	esac
 
 	if [ "$run_setup" = 0 ]; then
