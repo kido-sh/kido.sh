@@ -146,7 +146,7 @@ main() {
 
 	install -d "$prefix/bin" "$prefix/libexec/kido" "$prefix/share/doc/kido"
 	install -m 0755 "$tmp/x/bin/kido" "$prefix/bin/kido"
-	for helper in kido-agent kido-vmm; do
+	for helper in kido-agent kido-vmm kido-vk-worker kido-probe; do
 		if [ -f "$tmp/x/libexec/kido/$helper" ]; then
 			install -m 0755 "$tmp/x/libexec/kido/$helper" "$prefix/libexec/kido/$helper"
 		fi
