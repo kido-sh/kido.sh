@@ -281,10 +281,19 @@ tr.feat-row:hover td,tr.feat-row:hover td.col-sticky{background:var(--cs)}
 .copy-btn.is-copied{color:var(--ok);border-color:var(--ls)}
 .probe-note{font-size:13px !important;color:var(--m2) !important;margin-bottom:0 !important}
 
-/* CPU page flat prose + hairline table */
-.prose-block{padding:20px 0;border-top:1px solid var(--l);margin-bottom:24px;max-width:740px}
+/* CPU & kl pages flat prose + hairline table */
+.prose-block{padding:20px 0;border-top:1px solid var(--l);margin-bottom:24px;max-width:780px}
 .prose-block p{margin:0 0 12px;color:var(--m);font-size:14.5px;line-height:1.65}
 .prose-block p:last-child{margin-bottom:0}
+.prose-list{margin:8px 0 0;padding-left:18px;color:var(--m);font-size:14px;line-height:1.65}
+.prose-list li{margin:5px 0}
+.kl-term{margin:0 0 24px;padding:14px 16px;border-radius:10px;border:1px solid var(--l);background:#121210;color:#ededeb;font-family:var(--mono);font-size:12.5px;line-height:1.65;overflow-x:auto}
+.kl-term .kp{color:#f8c446;user-select:none;font-weight:600}
+.kl-term .ko{color:#96928b}
+.kl-term .kok{color:#5ad28b}
+.kl-section-head{margin:28px 0 12px}
+.kl-quick{max-width:none}
+.nowrap{white-space:nowrap}
 table.simple{width:100%;border-collapse:collapse;font-size:13.5px}
 table.simple th,table.simple td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--l);vertical-align:top}
 table.simple th{background:var(--cs);font-size:11.5px;font-weight:550;color:var(--m);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--ls)}
@@ -836,6 +845,9 @@ def render_shell(
 <p class="docs-nav-label">Documentation</p>
 <ul class="docs-nav">
 <li>
+<a href="/docs/kl/" class="{'is-active' if active_nav == 'kl' else ''}">kl System Packages</a>
+</li>
+<li>
 <a href="/docs/linux-hardware/" class="{'is-active' if active_nav == 'linux-hardware' else ''}">Supported Linux Hardware</a>
 <ul class="docs-nav docs-nav-sub">
 <li><a href="/docs/linux-hardware/cpu/" class="{'is-active' if active_nav == 'cpu' else ''}">CPU</a></li>
@@ -885,7 +897,9 @@ def render_shell(
 </a>
 <nav aria-label="Primary">
 <a href="/">Home</a>
-<a href="/docs/linux-hardware/" aria-current="page">Docs</a>
+<a href="https://play.kido.sh">Play</a>
+<a href="/docs/kl/"{' aria-current="page"' if active_nav == 'kl' else ''}>kl</a>
+<a href="/docs/linux-hardware/"{' aria-current="page"' if active_nav != 'kl' else ''}>Docs</a>
 <a href="https://github.com/kido-sh/kido">GitHub</a>
 <button type="button" class="theme-btn" id="theme-toggle" aria-label="Switch color theme" title="Switch light / dark theme"><svg class="ic-moon" width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M16.2 12.6A6.8 6.8 0 0 1 7.4 3.8a6.8 6.8 0 1 0 8.8 8.8Z" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/></svg><svg class="ic-sun" width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="3.4" stroke="currentColor" stroke-width="1.65"/><path d="M10 2.4v2M10 15.6v2M2.4 10h2M15.6 10h2M4.6 4.6l1.4 1.4M14 14l1.4 1.4M15.4 4.6 14 6M6 14l-1.4 1.4" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></button>
 </nav>
@@ -1317,11 +1331,177 @@ def write_page(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def render_kl_page(trademarks: list[str]) -> str:
+    packages = [
+        (
+            "standard",
+            "1.0.0",
+            "4.0 KiB / 4.0 KiB",
+            "Apache-2.0",
+            "Meta-package pulling libffi, libxml2, and python3.",
+        ),
+        (
+            "python3",
+            "3.13.14",
+            "4.14 MiB / 4.23 MiB",
+            "PSF-2.0",
+            "Python 3.13 interpreter and standard library (/usr/bin/python3).",
+        ),
+        (
+            "swift-runtime",
+            "5.10.1",
+            "2.58 MiB / 2.95 MiB",
+            "Apache-2.0 WITH Swift-exception",
+            "Open-source Swift 5.10.1 standard library and 9 companion runtime dylibs under /usr/lib/swift/.",
+        ),
+        (
+            "libxml2",
+            "2.15.3",
+            "465 KiB / 500 KiB",
+            "MIT",
+            "XML parser and toolkit library (/usr/lib/libxml2.2.dylib).",
+        ),
+        (
+            "libffi",
+            "3.5.2",
+            "8.5 KiB / 9.1 KiB",
+            "MIT",
+            "Portable Foreign Function Interface library (/usr/lib/libffi.dylib).",
+        ),
+    ]
+    pkg_rows = []
+    for name, ver, size, lic, desc in packages:
+        pkg_rows.append(
+            "<tr>"
+            f'<td class="nowrap"><span class="tbl-title"><code>{esc(name)}</code></span></td>'
+            f'<td class="nowrap"><code>{esc(ver)}</code></td>'
+            f'<td class="nowrap"><code>{esc(size)}</code></td>'
+            f"<td><code>{esc(lic)}</code></td>"
+            f"<td>{esc(desc)}</td>"
+            "</tr>"
+        )
+
+    cmds = [
+        ("kl update", "Fetch and verify the signed repository timestamp and package index."),
+        ("kl search TERM", "Search available packages by name or summary."),
+        ("kl add NAME...", "Resolve dependencies, verify chunks, and install packages atomically."),
+        ("kl rm NAME...", "Remove packages and any unneeded dependencies while preserving modified files."),
+        ("kl list", "Show installed packages and mark auto-installed dependencies."),
+        ("kl info NAME", "Inspect version, license, installed size, dependencies, and provided dylibs."),
+        ("kl which PATH", "Identify which package owns a file or dylib path, installed or remote."),
+        ("kl verify [NAME]", "Re-hash installed files on disk and report missing or modified files."),
+    ]
+    cmd_rows = []
+    for cmd, desc in cmds:
+        cmd_rows.append(
+            "<tr>"
+            f'<td class="nowrap"><code>{esc(cmd)}</code></td>'
+            f"<td>{esc(desc)}</td>"
+            "</tr>"
+        )
+
+    main_html = f"""<nav class="breadcrumb" aria-label="Breadcrumb">
+<a href="/docs/linux-hardware/">Documentation</a>
+<span class="sep" aria-hidden="true">/</span>
+<span>kl System Packages</span>
+</nav>
+<h1>kl System Packages</h1>
+<p class="doc-lede">Ed25519-signed, zero-GPL system libraries and runtimes for KidoDarwin micro-VMs. <code class="inline-code">/usr/bin/kl</code> ships in the KidoDarwin 26.5 base image and installs native Darwin packages from <code class="inline-code">https://kl.kido.sh</code> into their canonical macOS paths for both portable <code class="inline-code">arm64</code> and Apple Silicon <code class="inline-code">arm64e</code> (PAC).</p>
+
+<section class="probe-block kl-quick" aria-labelledby="kl-quick-heading">
+<h2 id="kl-quick-heading">Quick start inside a KidoDarwin VM</h2>
+<p>Update the signed index and install the standard library set or the open-source Swift runtime in a few seconds.</p>
+<div class="cmd-bar">
+<code>kl update &amp;&amp; kl add standard swift-runtime</code>
+<button type="button" class="copy-btn" data-copy="kl update &amp;&amp; kl add standard swift-runtime" aria-label="Copy kl install command">Copy</button>
+</div>
+<pre class="kl-term"><span class="kp"># </span>kl update
+<span class="ko">verified timestamp v2 (ed25519, 26.5/25F74/latest, arm64e)</span>
+<span class="kp"># </span>kl add standard swift-runtime
+<span class="kok">installed</span> libffi 3.5.2, libxml2 2.15.3, python3 3.13.14, standard 1.0.0, swift-runtime 5.10.1
+<span class="kp"># </span>python3 --version
+Python 3.13.14
+<span class="kp"># </span>ls /usr/lib/swift/libswiftCore.dylib
+/usr/lib/swift/libswiftCore.dylib
+<span class="kp"># </span>kl verify
+<span class="kok">ok</span>: 5 packages verified</pre>
+</section>
+
+<h2 class="kl-section-head">Available packages (KidoDarwin 26.5 / 25F74)</h2>
+<p class="doc-lede" style="margin-bottom:14px">Published for both portable <code class="inline-code">arm64</code> (ARMv8.0-A) and <code class="inline-code">arm64e</code> (Pointer Authentication + chained fixups). <code class="inline-code">kl</code> automatically selects <code class="inline-code">arm64e</code> on CPUs with PAC and <code class="inline-code">arm64</code> elsewhere.</p>
+<div class="matrix-shell">
+<div class="matrix-scroll">
+<table class="simple">
+<thead>
+<tr>
+<th>Package</th>
+<th>Version</th>
+<th>Download (arm64 / arm64e)</th>
+<th>License</th>
+<th>Provides / Summary</th>
+</tr>
+</thead>
+<tbody>
+{"".join(pkg_rows)}
+</tbody>
+</table>
+</div>
+</div>
+
+<h2 class="kl-section-head">Commands</h2>
+<div class="matrix-shell">
+<div class="matrix-scroll">
+<table class="simple">
+<thead>
+<tr>
+<th>Command</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+{"".join(cmd_rows)}
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="prose-block">
+<h2>Scope: Kido Libraries, not Homebrew</h2>
+<p><code class="inline-code">kl</code> keeps the KidoDarwin base image around 30 MB while letting unmodified macOS arm64 binaries resolve optional system libraries and runtimes under <code class="inline-code">/usr/lib</code>, <code class="inline-code">/usr/lib/swift</code>, and <code class="inline-code">/System/Library/Frameworks</code> using their exact Apple install names.</p>
+<p>Every package in the official <code class="inline-code">kl.kido.sh</code> repository is permissively licensed (zero GPL and zero LGPL) and built reproducibly from source via Nix. For third-party CLI tools and language ecosystems, bring your own tools via <code class="inline-code">-v</code> mounts, <code class="inline-code">uv</code>, or Homebrew.</p>
+</div>
+
+<div class="prose-block">
+<h2>Verification and mirrors</h2>
+<ul class="prose-list">
+<li><strong>Ed25519 target binding:</strong> <code class="inline-code">timestamp.json</code> is signed with SSHSIG (<code class="inline-code">kl-repo@kido.sh</code>) and cryptographically binds the OS version, build, channel, expiry, monotonic version (anti-rollback), and per-arch index SHA-256.</li>
+<li><strong>Streaming 4 MiB chunk verification:</strong> Every zstd package blob is verified chunk by chunk against signed SHA-256 digests before any byte reaches the decompressor or tar unpacker.</li>
+<li><strong>No install scripts:</strong> Packages contain files only, install strictly into allowed system prefixes, refuse symlinks in target paths, and commit atomically through a staged journal.</li>
+<li><strong>Untrusted mirrors:</strong> Configure LAN or S3/R2 mirrors in <code class="inline-code">/etc/kl.conf</code> or via <code class="inline-code">--mirror</code>. <code class="inline-code">kl</code> still checks the primary signed timestamp first and verifies every mirrored chunk locally.</li>
+</ul>
+<p style="margin-top:14px">For the full repository schema, <code class="inline-code">/etc/kl.conf</code> options, and self-hosting with <code class="inline-code">kl-repo</code>, see <a href="https://github.com/kido-sh/kido/blob/main/docs/kl.md">docs/kl.md on GitHub</a>.</p>
+</div>"""
+
+    return render_shell(
+        title="kl System Packages | kido",
+        description="Signed, zero-GPL macOS system libraries and runtimes for KidoDarwin micro-VMs from kl.kido.sh.",
+        canonical_path="/docs/kl/",
+        active_nav="kl",
+        main_html=main_html,
+        trademarks=trademarks,
+        extra_scripts=COPY_CMD_JS,
+    )
+
+
 def main() -> int:
     features, boards = load_and_validate()
     trademarks = collect_trademarks(features, boards)
 
     write_page(DOCS_DIR / "index.html", render_docs_redirect())
+    write_page(
+        DOCS_DIR / "kl" / "index.html",
+        render_kl_page(trademarks),
+    )
     write_page(
         DOCS_DIR / "linux-hardware" / "index.html",
         render_hardware_hub(trademarks),
