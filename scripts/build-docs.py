@@ -1351,8 +1351,8 @@ def render_kl_page(trademarks: list[str]) -> str:
             "swift-runtime",
             "5.10.1",
             "2.58 MiB / 2.95 MiB",
-            "Apache-2.0 WITH Swift-exception",
-            "Open-source Swift 5.10.1 standard library and 9 companion runtime dylibs under /usr/lib/swift/.",
+            "Apache-2.0 WITH Swift-exception AND Apache-2.0 WITH LLVM-exception",
+            "Open-source Swift 5.10.1 standard library and companion runtime dylibs under /usr/lib/swift/ (9 dylibs).",
         ),
         (
             "libxml2",
@@ -1367,6 +1367,55 @@ def render_kl_page(trademarks: list[str]) -> str:
             "8.5 KiB / 9.1 KiB",
             "MIT",
             "Portable Foreign Function Interface library (/usr/lib/libffi.dylib).",
+        ),
+        (
+            "libxslt",
+            "1.1.45",
+            "117 KiB / 125 KiB",
+            "MIT",
+            "XSLT C library and EXSLT extensions (/usr/lib/libxslt.1.dylib, /usr/lib/libexslt.0.dylib).",
+        ),
+        (
+            "libarchive",
+            "3.8.8",
+            "330 KiB / 352 KiB",
+            "BSD-2-Clause",
+            "Multi-format archive and compression library (/usr/lib/libarchive.2.dylib).",
+        ),
+        (
+            "libpcre2",
+            "10.46",
+            "133 KiB / 135 KiB",
+            "BSD-3-Clause",
+            "Perl Compatible Regular Expressions v2 library (/usr/lib/libpcre2-8.0.dylib, /usr/lib/libpcre2-posix.3.dylib).",
+        ),
+        (
+            "libpcre",
+            "8.45",
+            "83.2 KiB / 84.6 KiB",
+            "BSD-3-Clause",
+            "Legacy Perl Compatible Regular Expressions library (/usr/lib/libpcre.0.dylib, /usr/lib/libpcreposix.0.dylib).",
+        ),
+        (
+            "libpcap",
+            "1.10.6",
+            "104 KiB / 109 KiB",
+            "BSD-3-Clause",
+            "Portable packet capture library (/usr/lib/libpcap.A.dylib).",
+        ),
+        (
+            "libxar",
+            "501",
+            "40.4 KiB / 43.7 KiB",
+            "BSD-3-Clause",
+            "eXtensible ARchiver library (/usr/lib/libxar.1.dylib).",
+        ),
+        (
+            "libpam",
+            "20230627",
+            "17.7 KiB / 18.8 KiB",
+            "BSD-3-Clause",
+            "OpenPAM Pluggable Authentication Modules library (/usr/lib/libpam.2.dylib).",
         ),
     ]
     pkg_rows = []
@@ -1416,7 +1465,7 @@ def render_kl_page(trademarks: list[str]) -> str:
 <button type="button" class="copy-btn" data-copy="kl update &amp;&amp; kl add standard swift-runtime" aria-label="Copy kl install command">Copy</button>
 </div>
 <pre class="kl-term"><span class="kp"># </span>kl update
-<span class="ko">verified timestamp v2 (ed25519, 26.5/25F74/latest, arm64e)</span>
+<span class="ko">verified timestamp v3 (ed25519, 26.5/25F74/latest, arm64e)</span>
 <span class="kp"># </span>kl add standard swift-runtime
 <span class="kok">installed</span> libffi 3.5.2, libxml2 2.15.3, python3 3.13.14, standard 1.0.0, swift-runtime 5.10.1
 <span class="kp"># </span>python3 --version
@@ -1428,7 +1477,7 @@ Python 3.13.14
 </section>
 
 <h2 class="kl-section-head">Available packages (KidoDarwin 26.5 / 25F74)</h2>
-<p class="doc-lede" style="margin-bottom:14px">Published for both portable <code class="inline-code">arm64</code> (ARMv8.0-A) and <code class="inline-code">arm64e</code> (Pointer Authentication + chained fixups). <code class="inline-code">kl</code> automatically selects <code class="inline-code">arm64e</code> on CPUs with PAC and <code class="inline-code">arm64</code> elsewhere.</p>
+<p class="doc-lede" style="margin-bottom:14px">12 packages published for both portable <code class="inline-code">arm64</code> (ARMv8.0-A) and <code class="inline-code">arm64e</code> (Pointer Authentication + chained fixups). <code class="inline-code">kl</code> automatically selects <code class="inline-code">arm64e</code> on CPUs with PAC and <code class="inline-code">arm64</code> elsewhere.</p>
 <div class="matrix-shell">
 <div class="matrix-scroll">
 <table class="simple">
@@ -1474,6 +1523,7 @@ Python 3.13.14
 <div class="prose-block">
 <h2>Verification and mirrors</h2>
 <ul class="prose-list">
+<li><strong>2-of-3 TUF root trust:</strong> Online timestamp keys are delegated from <code class="inline-code">v1/root.1.json</code>, signed by a 2-of-3 threshold of offline Ed25519 root keys to support key rotation without rebuilding the base image.</li>
 <li><strong>Ed25519 target binding:</strong> <code class="inline-code">timestamp.json</code> is signed with SSHSIG (<code class="inline-code">kl-repo@kido.sh</code>) and cryptographically binds the OS version, build, channel, expiry, monotonic version (anti-rollback), and per-arch index SHA-256.</li>
 <li><strong>Streaming 4 MiB chunk verification:</strong> Every zstd package blob is verified chunk by chunk against signed SHA-256 digests before any byte reaches the decompressor or tar unpacker.</li>
 <li><strong>No install scripts:</strong> Packages contain files only, install strictly into allowed system prefixes, refuse symlinks in target paths, and commit atomically through a staged journal.</li>
