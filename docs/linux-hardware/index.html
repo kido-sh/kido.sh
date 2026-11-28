@@ -219,13 +219,24 @@ tr.feat-row:hover td,tr.feat-row:hover td.col-sticky{background:var(--cs)}
 .empty-diff.is-visible{display:block}
 
 /* Hardware hub list */
-.hw-list{border-top:1px solid var(--l);margin:24px 0 40px}
+.hw-list{border-top:1px solid var(--l);margin:24px 0 36px}
 .hw-row{display:flex;align-items:baseline;justify-content:space-between;gap:24px;padding:20px 4px;border-bottom:1px solid var(--l);color:var(--fg);transition:background-color .12s}
 .hw-row:hover{background:var(--cs)}
 .hw-row-title{font-size:16px;font-weight:550;letter-spacing:-.015em;margin:0 0 4px}
 .hw-row-desc{margin:0;color:var(--m);font-size:14px;line-height:1.55;text-wrap:pretty}
 .hw-row-arrow{font-size:14px;color:var(--m2);flex-shrink:0;transition:color .12s,transform .12s}
 .hw-row:hover .hw-row-arrow{color:var(--fg);transform:translateX(2px)}
+
+/* Standalone hardware probe block */
+.probe-block{padding:4px 0 12px;max-width:740px}
+.probe-block p{margin:0 0 14px;color:var(--m);font-size:14.5px;line-height:1.65;text-wrap:pretty}
+.cmd-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 10px 10px 14px;border:1px solid var(--l);border-radius:8px;background:var(--cs);margin-bottom:12px}
+.cmd-bar code{font-family:var(--mono);font-size:13px;color:var(--fg);overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+.cmd-bar code::-webkit-scrollbar{display:none}
+.copy-btn{appearance:none;flex-shrink:0;padding:4px 10px;border-radius:6px;background:var(--c);border:1px solid var(--l);color:var(--m);font-family:inherit;font-size:12px;font-weight:450;cursor:pointer;transition:color .15s,border-color .15s,background-color .15s}
+.copy-btn:hover{color:var(--fg);border-color:var(--ls)}
+.copy-btn.is-copied{color:var(--ok);border-color:var(--ls)}
+.probe-note{font-size:13px !important;color:var(--m2) !important;margin-bottom:0 !important}
 
 /* CPU page flat prose + hairline table */
 .prose-block{padding:20px 0;border-top:1px solid var(--l);margin-bottom:24px;max-width:740px}
@@ -318,6 +329,16 @@ footer p{margin:5px 0}
 <span class="hw-row-arrow" aria-hidden="true">&rarr;</span>
 </a>
 </div>
+
+<section class="probe-block" aria-labelledby="probe-heading">
+<h2 id="probe-heading">Check your board</h2>
+<p>Run the standalone hardware probe on any ARM64 Linux host to inspect KVM, GIC, Vulkan compute limits, zero-copy memory tiers, and DMA coherency without installing kido.</p>
+<div class="cmd-bar">
+<code>curl -fsSL https://kido.sh/probe.sh | sh</code>
+<button type="button" class="copy-btn" data-copy="curl -fsSL https://kido.sh/probe.sh | sh" aria-label="Copy probe command">Copy</button>
+</div>
+<p class="probe-note">Verifies the release signature and SHA-256 before running and leaves nothing installed. Append <code class="inline-code">-s -- --json</code> to export a board capability JSON record, or run <code class="inline-code">kido probe</code> if kido is already installed.</p>
+</section>
 </main>
 </div>
 <footer>
@@ -328,7 +349,20 @@ footer p{margin:5px 0}
 </div>
 </footer>
 </div>
-
+<script>(function(){
+document.querySelectorAll(".copy-btn[data-copy]").forEach(function(btn){
+btn.addEventListener("click",function(){
+var text=btn.getAttribute("data-copy")||"";
+if(!navigator.clipboard)return;
+navigator.clipboard.writeText(text).then(function(){
+var orig=btn.textContent;
+btn.textContent="Copied";
+btn.classList.add("is-copied");
+setTimeout(function(){btn.textContent=orig;btn.classList.remove("is-copied")},1500);
+}).catch(function(){});
+});
+});
+})();</script>
 <script>(function(){
 var b=document.getElementById("theme-toggle");if(!b)return;
 var mq=window.matchMedia("(prefers-color-scheme: dark)");
