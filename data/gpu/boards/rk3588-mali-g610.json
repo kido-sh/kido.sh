@@ -1,0 +1,290 @@
+{
+  "id": "rk3588-mali-g610",
+  "order": 10,
+  "name": "RK3588",
+  "subtitle": "Mali-G610 MC4",
+  "vendor": "Rockchip",
+  "gpu": "Arm Mali-G610 MC4 (Valhall)",
+  "cpu": "4x Cortex-A76 + 4x Cortex-A55",
+  "arch": "ARMv8.2-A (GICv3)",
+  "driver": "Mesa PanVK 27.0, Vulkan 1.4.363",
+  "kernel": "Linux 6.18 / 6.19+ (panthor + KVM)",
+  "verification": {
+    "status": "Verified"
+  },
+  "trademarks": [
+    "Mali is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.",
+    "Rockchip is a trademark of Rockchip Electronics Co., Ltd."
+  ],
+  "capabilities": {
+    "verification_status": {
+      "status": "native",
+      "value": "Verified",
+      "detail": "Live Metal compute, .metallib AIR, and async pipeline verified"
+    },
+    "metal_api_level": {
+      "status": "native",
+      "value": "Metal 3 Compute",
+      "detail": "Core compute, blit, function constants, .metallib AIR, async queues"
+    },
+    "effective_gpu_family": {
+      "status": "native",
+      "value": "Apple6/Apple7 (Compute)",
+      "detail": "Meets Apple6/Apple7 compute limits and Apple8 SIMD; lacks HW matrix and bfloat16"
+    },
+    "vulkan_driver": {
+      "status": "native",
+      "value": "PanVK 27.0, Vulkan 1.4",
+      "detail": "Conformance 1.4.1.2 (Mesa upstream panthor)"
+    },
+
+    "max_threads_per_tg": {
+      "status": "native",
+      "pass_status": "native",
+      "fail_status": "hw_limit",
+      "numeric": 1024,
+      "value": "1024",
+      "detail": "1024 x 1024 x 1024 compute workgroup"
+    },
+    "max_tg_memory": {
+      "status": "native",
+      "pass_status": "native",
+      "fail_status": "hw_limit",
+      "numeric": 32,
+      "value": "32 KB",
+      "detail": "32,768 bytes maxComputeSharedMemorySize"
+    },
+    "buffer_arg_slots": {
+      "status": "native",
+      "pass_status": "native",
+      "fail_status": "hw_limit",
+      "numeric": 1048576,
+      "value": "31 (HW: 1,048,576)",
+      "detail": "Exceeds Apple2+ direct slot limit"
+    },
+    "max_texture_2d": {
+      "status": "hw_ready",
+      "pass_status": "hw_ready",
+      "fail_status": "hw_limit",
+      "numeric": 65536,
+      "value": "65,536 px",
+      "detail": "Exceeds Apple11 (32,768 px); textures not yet wired in kido"
+    },
+    "max_viewports": {
+      "status": "hw_limit",
+      "pass_status": "hw_ready",
+      "fail_status": "hw_limit",
+      "numeric": 1,
+      "value": "1",
+      "detail": "Hardware supports 1 viewport (Apple5+ requires 16)"
+    },
+    "max_msaa_samples": {
+      "status": "hw_ready",
+      "pass_status": "hw_ready",
+      "fail_status": "hw_limit",
+      "numeric": 16,
+      "value": "16x",
+      "detail": "1/4/8/16x MSAA in hardware; render passes not yet wired"
+    },
+
+    "function_specialization": {
+      "status": "native",
+      "value": "Supported",
+      "detail": "Lowered to Vulkan specialization constants"
+    },
+    "fp16_compute": {
+      "status": "native",
+      "value": "Native FP16",
+      "detail": "shaderFloat16 and storageBuffer16BitAccess"
+    },
+    "int8_storage": {
+      "status": "native",
+      "value": "Native Int8",
+      "detail": "shaderInt8, storageBuffer8BitAccess, packed 4x8 dot product"
+    },
+    "etc2_astc": {
+      "status": "hw_ready",
+      "value": "ETC2, ASTC LDR/HDR",
+      "detail": "Present in hardware; texture path not yet wired"
+    },
+    "pvrtc_formats": {
+      "status": "hw_limit",
+      "value": "Unsupported",
+      "detail": "Apple/PowerVR proprietary format; decode-only fallback possible in software"
+    },
+    "int64_math": {
+      "status": "native",
+      "value": "Native Int64",
+      "detail": "shaderInt64 = true"
+    },
+    "indirect_dispatch": {
+      "status": "native",
+      "value": "Supported",
+      "detail": "Backed by vkCmdDispatchIndirect"
+    },
+    "binary_archives": {
+      "status": "software",
+      "value": "Sandboxed AIR to SPIR-V",
+      "detail": "Verified with macOS 27.2 MTLECBE/default .metallib and neural kernels"
+    },
+    "tessellation": {
+      "status": "hw_limit",
+      "value": "Unsupported",
+      "detail": "tessellationShader = false"
+    },
+    "quad_permute": {
+      "status": "native",
+      "value": "Subgroup 16, QUAD",
+      "detail": "Hardware quad subgroup operations"
+    },
+    "nonuniform_tg": {
+      "status": "native",
+      "value": "Supported",
+      "detail": "dispatchThreads bounds-clamped in shader/worker"
+    },
+    "apple_tbdr": {
+      "status": "hw_limit",
+      "value": "Unsupported",
+      "detail": "Apple-proprietary TBDR tile memory and raster order groups"
+    },
+
+    "argument_buffers_t2": {
+      "status": "hw_ready",
+      "value": "BDA and 1M Bindless",
+      "detail": "bufferDeviceAddress and UpdateAfterBind ready in PanVK"
+    },
+    "simd_permute_ballot": {
+      "status": "native",
+      "value": "SHUFFLE and BALLOT",
+      "detail": "Hardware subgroup shuffle, relative shuffle, and ballot"
+    },
+    "bfloat16": {
+      "status": "emulatable",
+      "value": "Software lowering",
+      "detail": "No HW bfloat16; emulatable via FP32 in air2spv"
+    },
+    "sparse_textures": {
+      "status": "hw_ready",
+      "value": "128 TB sparse VA",
+      "detail": "Hardware sparse address space present; not yet wired"
+    },
+    "ray_tracing": {
+      "status": "hw_limit",
+      "value": "Unsupported",
+      "detail": "No hardware ray-query or acceleration structure units"
+    },
+
+    "simd_reduction": {
+      "status": "native",
+      "value": "ARITHMETIC and VOTE",
+      "detail": "Hardware subgroup arithmetic reductions and clustered ops"
+    },
+    "simdgroup_matrix": {
+      "status": "emulatable",
+      "value": "Software lowering",
+      "detail": "No HW cooperativeMatrix; emulatable via FP16/FP32 subgroup math"
+    },
+    "float_atomics": {
+      "status": "emulatable",
+      "value": "Load/store HW, add CAS",
+      "detail": "shaderBufferFloat32Atomics = true, atomic_add emulatable via CAS"
+    },
+    "acq_rel_atomics": {
+      "status": "hw_ready",
+      "value": "Vulkan Memory Model",
+      "detail": "vulkanMemoryModel and deviceScope = true in PanVK"
+    },
+    "mesh_shading": {
+      "status": "hw_limit",
+      "value": "Unsupported",
+      "detail": "No hardware mesh shader pipeline"
+    },
+    "m4_argument_tables": {
+      "status": "hw_ready",
+      "value": "Bindless descriptor table",
+      "detail": "Mappable to PanVK UpdateAfterBind descriptor indexing"
+    },
+    "m4_command_allocators": {
+      "status": "emulatable",
+      "value": "Host allocator mapping",
+      "detail": "Implementable in kido-vk-worker over VkCommandPool"
+    },
+    "m4_command_barriers": {
+      "status": "hw_ready",
+      "value": "Vulkan sync2 barriers",
+      "detail": "Mappable directly to vkCmdPipelineBarrier2"
+    },
+    "m4_tensors_ml": {
+      "status": "emulatable",
+      "value": "Compute shader lowering",
+      "detail": "No dedicated tensor unit; lowered to FP16/Int8 compute kernels"
+    },
+    "m4_counter_heaps": {
+      "status": "hw_ready",
+      "value": "VkQueryPool timestamps",
+      "detail": "64-bit hardware timestamp queries available in PanVK"
+    },
+
+    "simd_rotate": {
+      "status": "native",
+      "value": "ROTATE supported",
+      "detail": "ROTATE and ROTATE_CLUSTERED in hardware"
+    },
+    "m4_placement_sparse": {
+      "status": "hw_ready",
+      "value": "128 TB sparse VA",
+      "detail": "Hardware sparse binding present; not yet wired"
+    },
+    "bc_compression": {
+      "status": "hw_ready",
+      "value": "BC1-BC7 in HW",
+      "detail": "textureCompressionBC = true in PanVK"
+    },
+    "atomics_64bit": {
+      "status": "hw_ready",
+      "value": "Full Int64 atomics",
+      "detail": "Buffer, shared, and image 64-bit integer atomics in PanVK"
+    },
+    "sampler_minmax": {
+      "status": "hw_ready",
+      "value": "Supported in HW",
+      "detail": "samplerFilterMinmax = true in PanVK"
+    },
+    "depth_bounds": {
+      "status": "hw_limit",
+      "value": "Unsupported",
+      "detail": "depthBounds = false"
+    },
+    "fp32_denormals": {
+      "status": "hw_ready",
+      "value": "Preserved in HW",
+      "detail": "shaderDenormPreserveFloat32 = true"
+    },
+
+    "zero_copy_tier": {
+      "status": "native",
+      "value": "udmabuf (Tier 1)",
+      "detail": "Zero-copy BAR4 import up to kernel udmabuf limit (64 MiB default)"
+    },
+    "dma_coherency": {
+      "status": "software",
+      "value": "KVM dirty-log + PoC sync",
+      "detail": "Non-coherent SoC; 4-core parallel ARM64 dc civac auto-selected"
+    },
+    "async_pipeline": {
+      "status": "native",
+      "value": "4-slot async ring",
+      "detail": "Up to 1.78x speedup over synchronous commits"
+    },
+    "hw_timestamps": {
+      "status": "native",
+      "value": "64-bit HW timestamps",
+      "detail": "41.67 ns period via VkQueryPool"
+    },
+    "measured_utilization": {
+      "status": "native",
+      "value": "98.1% ± 1.0%",
+      "detail": "169.4 GFLOP/s FP16 GEMM, 21.2 GB/s SwiGLU"
+    }
+  }
+}

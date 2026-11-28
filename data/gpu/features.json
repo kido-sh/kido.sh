@@ -1,0 +1,453 @@
+{
+  "schema_version": 2,
+  "apple_reference": {
+    "title": "Apple Metal Feature Set Tables",
+    "date": "October 23, 2026",
+    "url": "https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf"
+  },
+  "apple_families": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+  "statuses": {
+    "native": {
+      "label": "Native",
+      "description": "Supported by host GPU hardware and active in kido today."
+    },
+    "software": {
+      "label": "Software",
+      "description": "Implemented in software by kido today."
+    },
+    "hw_ready": {
+      "label": "HW Ready",
+      "description": "Supported by host GPU hardware and Linux Vulkan driver, not yet wired in kido."
+    },
+    "emulatable": {
+      "label": "Emulatable",
+      "description": "Not native in GPU hardware, can be emulated in software by kido."
+    },
+    "hw_limit": {
+      "label": "HW Limit",
+      "description": "Not supported by the underlying GPU silicon or driver."
+    }
+  },
+  "core_trademarks": [
+    "Apple, Darwin, macOS, and Metal are trademarks of Apple Inc., registered in the U.S. and other countries and regions.",
+    "Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.",
+    "Vulkan is a registered trademark of the Khronos Group Inc.",
+    "Linux is the registered trademark of Linus Torvalds in the U.S. and other countries."
+  ],
+  "sections": [
+    {
+      "id": "status",
+      "title": "Status",
+      "always_visible": true,
+      "rows": [
+        {
+          "id": "verification_status",
+          "name": "Verification",
+          "apple_ref": "Host and guest",
+          "kind": "meta"
+        },
+        {
+          "id": "target_match",
+          "name": "Target Match",
+          "apple_ref": "Selected API and family",
+          "kind": "computed_summary"
+        },
+        {
+          "id": "metal_api_level",
+          "name": "Current Metal API Level",
+          "apple_ref": "Metal 3 / Metal 4",
+          "kind": "meta"
+        },
+        {
+          "id": "effective_gpu_family",
+          "name": "Compute Family Equivalent",
+          "apple_ref": "Apple2 to Apple11",
+          "kind": "meta"
+        },
+        {
+          "id": "vulkan_driver",
+          "name": "Linux Vulkan Driver",
+          "apple_ref": "Host backend",
+          "kind": "meta"
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Implementation Limits",
+      "rows": [
+        {
+          "id": "max_threads_per_tg",
+          "name": "Max Threads / Threadgroup",
+          "apple_ref": "512 (Apple2), 1024 (Apple4+)",
+          "min_apple": 2,
+          "metal_models": ["metal3", "metal4"],
+          "unit": "",
+          "thresholds": {
+            "2": 512, "3": 512,
+            "4": 1024, "5": 1024, "6": 1024, "7": 1024, "8": 1024, "9": 1024, "10": 1024, "11": 1024
+          }
+        },
+        {
+          "id": "max_tg_memory",
+          "name": "Max Threadgroup Memory",
+          "apple_ref": "16 KB (Apple2), 32 KB (Apple4+)",
+          "min_apple": 2,
+          "metal_models": ["metal3", "metal4"],
+          "unit": " KB",
+          "thresholds": {
+            "2": 16, "3": 16,
+            "4": 32, "5": 32, "6": 32, "7": 32, "8": 32, "9": 32, "10": 32, "11": 32
+          }
+        },
+        {
+          "id": "buffer_arg_slots",
+          "name": "Buffer Slots / Stage",
+          "apple_ref": "31 (Apple2+)",
+          "min_apple": 2,
+          "metal_models": ["metal3", "metal4"],
+          "unit": "",
+          "thresholds": {
+            "2": 31, "3": 31, "4": 31, "5": 31, "6": 31, "7": 31, "8": 31, "9": 31, "10": 31, "11": 31
+          }
+        },
+        {
+          "id": "max_texture_2d",
+          "name": "Max 2D Texture Size",
+          "apple_ref": "8192 (Apple2), 16384 (Apple3-9), 32768 (Apple10+)",
+          "min_apple": 2,
+          "metal_models": ["metal3", "metal4"],
+          "unit": " px",
+          "thresholds": {
+            "2": 8192,
+            "3": 16384, "4": 16384, "5": 16384, "6": 16384, "7": 16384, "8": 16384, "9": 16384,
+            "10": 32768, "11": 32768
+          }
+        },
+        {
+          "id": "max_viewports",
+          "name": "Max Viewports",
+          "apple_ref": "1 (Apple2-4), 16 (Apple5+)",
+          "min_apple": 2,
+          "metal_models": ["metal3", "metal4"],
+          "unit": "",
+          "thresholds": {
+            "2": 1, "3": 1, "4": 1,
+            "5": 16, "6": 16, "7": 16, "8": 16, "9": 16, "10": 16, "11": 16
+          }
+        },
+        {
+          "id": "max_msaa_samples",
+          "name": "Max MSAA Sample Count",
+          "apple_ref": "4x (Apple2-9), 8x (Apple10+)",
+          "min_apple": 2,
+          "metal_models": ["metal3", "metal4"],
+          "unit": "x",
+          "thresholds": {
+            "2": 4, "3": 4, "4": 4, "5": 4, "6": 4, "7": 4, "8": 4, "9": 4,
+            "10": 8, "11": 8
+          }
+        }
+      ]
+    },
+    {
+      "id": "apple2_5",
+      "title": "Apple2 to Apple5",
+      "rows": [
+        {
+          "id": "function_specialization",
+          "name": "Function Specialization",
+          "apple_ref": "Apple2, Metal 3/4",
+          "min_apple": 2,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "fp16_compute",
+          "name": "FP16 and 16-bit Storage",
+          "apple_ref": "Apple2, Metal 3/4",
+          "min_apple": 2,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "int8_storage",
+          "name": "8-bit Integer and Storage",
+          "apple_ref": "Apple2, Metal 3/4",
+          "min_apple": 2,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "etc2_astc",
+          "name": "ETC2 and ASTC Compression",
+          "apple_ref": "Apple2, Metal 3/4",
+          "min_apple": 2,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "pvrtc_formats",
+          "name": "PVRTC Pixel Formats",
+          "apple_ref": "Apple2, Metal 3/4",
+          "min_apple": 2,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "int64_math",
+          "name": "64-bit Integer Math",
+          "apple_ref": "Apple3, Metal 3/4",
+          "min_apple": 3,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "indirect_dispatch",
+          "name": "Indirect Compute Dispatch",
+          "apple_ref": "Apple3, Metal 3/4",
+          "min_apple": 3,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "binary_archives",
+          "name": "Prebuilt .metallib (AIR)",
+          "apple_ref": "Apple3, Metal 3/4",
+          "min_apple": 3,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "tessellation",
+          "name": "Tessellation",
+          "apple_ref": "Apple3, Metal 3",
+          "min_apple": 3,
+          "metal_models": ["metal3"]
+        },
+        {
+          "id": "quad_permute",
+          "name": "Quad-Scoped Permute",
+          "apple_ref": "Apple4, Metal 3/4",
+          "min_apple": 4,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "nonuniform_tg",
+          "name": "Nonuniform Threadgroup Size",
+          "apple_ref": "Apple4, Metal 3/4",
+          "min_apple": 4,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "apple_tbdr",
+          "name": "Imageblocks, Tile Shaders, ROG",
+          "apple_ref": "Apple4, Metal 3/4",
+          "min_apple": 4,
+          "metal_models": ["metal3", "metal4"]
+        }
+      ]
+    },
+    {
+      "id": "apple6",
+      "title": "Apple6",
+      "rows": [
+        {
+          "id": "argument_buffers_t2",
+          "name": "Argument Buffers Tier 2",
+          "apple_ref": "Apple6, Metal 3/4",
+          "min_apple": 6,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "simd_permute_ballot",
+          "name": "SIMD Permute and Quad Ballot",
+          "apple_ref": "Apple6, Metal 3/4",
+          "min_apple": 6,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "bfloat16",
+          "name": "BFloat16",
+          "apple_ref": "Apple6, Metal 3/4",
+          "min_apple": 6,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "sparse_textures",
+          "name": "Sparse Textures",
+          "apple_ref": "Apple6, Metal 3/4",
+          "min_apple": 6,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "ray_tracing",
+          "name": "Ray Tracing (Compute / Render)",
+          "apple_ref": "Apple6, Metal 3/4",
+          "min_apple": 6,
+          "metal_models": ["metal3", "metal4"]
+        }
+      ]
+    },
+    {
+      "id": "apple7",
+      "title": "Apple7 (Metal 3 and Metal 4 Baseline)",
+      "rows": [
+        {
+          "id": "simd_reduction",
+          "name": "SIMD and Quad Reductions",
+          "apple_ref": "Apple7, Metal 3/4",
+          "min_apple": 7,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "simdgroup_matrix",
+          "name": "SIMD Matrix Multiply (simdgroup_matrix)",
+          "apple_ref": "Apple7, Metal 3/4",
+          "min_apple": 7,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "float_atomics",
+          "name": "Floating-Point Atomics",
+          "apple_ref": "Apple7, Metal 3/4",
+          "min_apple": 7,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "acq_rel_atomics",
+          "name": "Acquire/Release Atomics",
+          "apple_ref": "Apple7, Metal 3/4",
+          "min_apple": 7,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "mesh_shading",
+          "name": "Mesh Shading",
+          "apple_ref": "Apple7, Metal 3/4",
+          "min_apple": 7,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "m4_argument_tables",
+          "name": "Argument Tables",
+          "apple_ref": "Apple7, Metal 4",
+          "min_apple": 7,
+          "metal_models": ["metal4"]
+        },
+        {
+          "id": "m4_command_allocators",
+          "name": "Command Allocators and Decoupled Buffers",
+          "apple_ref": "Apple7, Metal 4",
+          "min_apple": 7,
+          "metal_models": ["metal4"]
+        },
+        {
+          "id": "m4_command_barriers",
+          "name": "Command Barriers",
+          "apple_ref": "Apple7, Metal 4",
+          "min_apple": 7,
+          "metal_models": ["metal4"]
+        },
+        {
+          "id": "m4_tensors_ml",
+          "name": "Tensors and ML Encoding",
+          "apple_ref": "Apple7, Metal 4",
+          "min_apple": 7,
+          "metal_models": ["metal4"]
+        },
+        {
+          "id": "m4_counter_heaps",
+          "name": "Performance Counter Heaps",
+          "apple_ref": "Apple7, Metal 4",
+          "min_apple": 7,
+          "metal_models": ["metal4"]
+        }
+      ]
+    },
+    {
+      "id": "apple8_11",
+      "title": "Apple8 to Apple11",
+      "rows": [
+        {
+          "id": "simd_rotate",
+          "name": "SIMD Shift and Fill (Rotate)",
+          "apple_ref": "Apple8, Metal 3/4",
+          "min_apple": 8,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "m4_placement_sparse",
+          "name": "Placement Sparse Buffers and Textures",
+          "apple_ref": "Apple8, Metal 4",
+          "min_apple": 8,
+          "metal_models": ["metal4"]
+        },
+        {
+          "id": "bc_compression",
+          "name": "BC Texture Compression",
+          "apple_ref": "Apple9, Metal 3/4",
+          "min_apple": 9,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "atomics_64bit",
+          "name": "64-bit Atomics",
+          "apple_ref": "Apple9, Metal 3/4",
+          "min_apple": 9,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "sampler_minmax",
+          "name": "Sampler Min/Max Reduction",
+          "apple_ref": "Apple10, Metal 3/4",
+          "min_apple": 10,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "depth_bounds",
+          "name": "Depth Bounds Testing",
+          "apple_ref": "Apple10, Metal 3/4",
+          "min_apple": 10,
+          "metal_models": ["metal3", "metal4"]
+        },
+        {
+          "id": "fp32_denormals",
+          "name": "FP32 Denormalized Numbers",
+          "apple_ref": "Apple11, Metal 3/4",
+          "min_apple": 11,
+          "metal_models": ["metal3", "metal4"]
+        }
+      ]
+    },
+    {
+      "id": "runtime",
+      "title": "kido Runtime",
+      "always_visible": true,
+      "rows": [
+        {
+          "id": "zero_copy_tier",
+          "name": "Zero-Copy Shared Memory",
+          "apple_ref": "virtio-metal BAR4",
+          "kind": "runtime"
+        },
+        {
+          "id": "dma_coherency",
+          "name": "Cache Coherency",
+          "apple_ref": "Host/guest sync",
+          "kind": "runtime"
+        },
+        {
+          "id": "async_pipeline",
+          "name": "Async Command Pipeline",
+          "apple_ref": "4-slot ring",
+          "kind": "runtime"
+        },
+        {
+          "id": "hw_timestamps",
+          "name": "GPU Timestamps",
+          "apple_ref": "VkQueryPool",
+          "kind": "runtime"
+        },
+        {
+          "id": "measured_utilization",
+          "name": "Pipelined GPU Utilization",
+          "apple_ref": "3-deep Metal bench",
+          "kind": "runtime"
+        }
+      ]
+    }
+  ]
+}
